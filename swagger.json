@@ -1,0 +1,105 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Membership API",
+    "description": "REST API untuk aplikasi Membership dengan autentikasi JWT, manajemen point transaksi POS, dan balance point member",
+    "version": "1.0.0",
+    "contact": {
+      "name": "API Support"
+    },
+    "license": {
+      "name": "MIT"
+    }
+  },
+  "host": "localhost:3000",
+  "servers": [
+    {
+      "url": "http://localhost:3200",
+      "description": "Development Server"
+    },
+    {
+      "url": "https://api.membership.local",
+      "description": "Production Server"
+    }
+  ],
+  "basePath": "/",
+  "tags": [
+    {
+      "name": "Membership",
+      "description": "Endpoint health check dan informasi umum Membership"
+    },
+    {
+      "name": "Authentication",
+      "description": "Endpoint registrasi dan login member"
+    },
+    {
+      "name": "Points",
+      "description": "Endpoint manajemen point transaksi dan balance"
+    }
+  ],
+  "schemes": [
+    "http"
+  ],
+  "securityDefinitions": {
+    "BearerAuth": {
+      "type": "apiKey",
+      "scheme": "bearer",
+      "bearerFormat": "JWT",
+      "name": "Authorization",
+      "in": "header",
+      "description": "JWT token dari endpoint login"
+    }
+  },
+  "paths": {
+    "/ping": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/register": {
+      "post": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/login": {
+      "post": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/transactions": {
+      "post": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/balance": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    }
+  }
+}
