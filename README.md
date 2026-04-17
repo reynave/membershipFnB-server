@@ -275,18 +275,11 @@ Contoh route report:
 
 ## Status API
 
-Dokumen ini menyiapkan fondasi server API membership. Jika ingin, langkah berikutnya bisa ditambahkan:
+Dokumen ini menyiapkan fondasi server API membership. 
 
 - Swagger/OpenAPI docs
 - Unit/integration test (Jest + Supertest)
 - Dockerfile + docker-compose untuk MySQL
 - CI pipeline (lint + test)
 
----
-
-Jika kamu mau, saya bisa lanjut sekalian bikin:
-
-1. skeleton struktur `src` untuk Express
-2. boilerplate koneksi MySQL
-3. middleware auth JWT
-4. contoh endpoint login + profile + realtime event
+ 
