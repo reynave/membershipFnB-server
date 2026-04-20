@@ -185,3 +185,23 @@ npm run swagger
 ```
 
 Kemudian reload browser untuk melihat dokumentasi yang ter-update.
+
+## Standar Wajib (Agar Tidak Salah Lagi)
+
+1. Semua path di Swagger harus pakai prefix lengkap, contoh:
+   - `/api/membership/...`
+   - `/api/v1/pos/...`
+   - Jangan pakai path pendek seperti `/balance`, `/history`, `/login`.
+
+2. Endpoint POS V1 saat ini ada di namespace:
+   - `/api/v1/pos/members/balance`
+   - `/api/v1/pos/members/history/today`
+   - `/api/v1/pos/points/in`
+   - `/api/v1/pos/redeem`
+
+3. Mode auth POS V1 dikontrol ENV:
+   - `POS_V1_JWT_REQUIRED=false` => tanpa JWT
+   - `POS_V1_JWT_REQUIRED=true` => wajib JWT
+
+4. Sumber kebenaran dokumentasi ada di `swagger-config.js` bagian `doc.paths`.
+   Jika hasil auto-generate menimpa path jadi pendek, perbaiki `doc.paths` lalu generate ulang.

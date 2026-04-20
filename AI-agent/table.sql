@@ -23,21 +23,27 @@ CREATE TABLE IF NOT EXISTS `members` (
   `email` varchar(190) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
   `status` tinyint(4) NOT NULL DEFAULT 1,
+  `verified` tinyint(4) NOT NULL DEFAULT 0,
+  `activated` tinyint(4) NOT NULL DEFAULT 0,
   `presence` tinyint(4) NOT NULL DEFAULT 1,
   `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
   `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE KEY `uq_members_email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  UNIQUE KEY `uq_members_email` (`email`),
+  UNIQUE KEY `phone` (`phone`)
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table membership.members: ~5 rows (approximately)
-INSERT INTO `members` (`id`, `tierId`, `phone`, `name`, `email`, `password_hash`, `status`, `presence`, `inputDate`, `updateDate`) VALUES
-	(1, 1, '1', 'Demo User', 'demo.user@example.com', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 1, '2026-04-15 10:48:14', '2026-04-16 09:23:28'),
-	(2, 1, '2', 'Revisi Schema', 'schema.revisi@example.com', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 1, '2026-04-15 11:01:51', '2026-04-16 09:23:28'),
-	(3, 1, '3', 'testing', 'cso1@email.com', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 1, '2026-04-15 11:26:14', '2026-04-16 07:38:42'),
-	(4, 1, '4', 'uat', 'uat@email.com', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 1, '2026-04-15 11:31:42', '2026-04-16 09:23:29'),
-	(5, 1, '0', 'Test Member', 'testmember@example.com', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 1, '2026-04-16 09:09:38', '2026-04-16 09:23:29'),
-	(6, 0, '0', 'Test Member 2', 'testmember2@example.com', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 1, '2026-04-16 09:09:47', '2026-04-16 09:23:30');
+-- Dumping data for table membership.members: ~9 rows (approximately)
+INSERT INTO `members` (`id`, `tierId`, `phone`, `name`, `email`, `password_hash`, `status`, `verified`, `activated`, `presence`, `inputDate`, `updateDate`) VALUES
+	(1, 1, '111', 'testing', 'cso1@email.com', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 0, 1, 1, '2026-04-15 11:26:14', '2026-04-20 09:13:08'),
+	(2, 1, '2222', 'Revisi Schema', 'schema.revisi@example.com', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 0, 1, 1, '2026-04-15 11:01:51', '2026-04-20 09:13:10'),
+	(4, 1, '3333', 'uat', 'uat@email.com', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 0, 1, 1, '2026-04-15 11:31:42', '2026-04-20 09:13:11'),
+	(5, 1, '4444', 'Test Member', 'testmember@example.com', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 0, 1, 1, '2026-04-16 09:09:38', '2026-04-20 09:13:13'),
+	(6, 0, '5555', 'Test Member 2', 'testmember2@example.com', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 0, 1, 1, '2026-04-16 09:09:47', '2026-04-20 09:13:14'),
+	(12, 1, '16666', 'Demo User', 'demo.user@example.com', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 0, 1, 1, '2026-04-15 10:48:14', '2026-04-20 09:13:16'),
+	(13, 1, '0899911122244', 'Guest 2244', 'auto-0899911122244-1776677056242-80f51698743a@guest.membership.local', '$2b$04$1Vym9vyX5kpMqgWsn7ga8OPT28/R5cbcUVxuYAojbMQuVa8QaT1nm', 1, 0, 0, 1, '2026-04-20 09:24:16', '2026-04-20 09:24:16'),
+	(14, 1, '0899911122255', 'Guest 2255', 'auto-0899911122255-1776677083345-cddce4241ec5@guest.membership.local', '$2b$04$S8d.5aqm3OvzRqSHnB11EuoXNERBvDck4HX98Gt9zhV3VjVifEC7.', 1, 0, 0, 1, '2026-04-20 09:24:43', '2026-04-20 09:24:43'),
+	(15, 1, '0899911122266', 'Guest 2266', 'auto-0899911122266-1776677305520-df29e99810ed@guest.membership.local', '$2b$04$XGmlXMW2NvWDowgwW1ONRuETwSL9F4O.IxWqtdELIduRhKBn38nNS', 1, 0, 0, 1, '2026-04-20 09:28:25', '2026-04-20 09:28:25');
 
 -- Dumping structure for table membership.members_code
 CREATE TABLE IF NOT EXISTS `members_code` (
@@ -50,9 +56,18 @@ CREATE TABLE IF NOT EXISTS `members_code` (
   `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE KEY `code` (`redeemCode`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table membership.members_code: ~0 rows (approximately)
+-- Dumping data for table membership.members_code: ~8 rows (approximately)
+INSERT INTO `members_code` (`id`, `memberId`, `redeemCode`, `expDateTime`, `presence`, `inputDate`, `updateDate`) VALUES
+	(7, 1, 'TEST-REDEEM-001', '2026-12-31 23:59:59', 0, '2026-04-17 11:08:51', '2026-04-17 11:08:58'),
+	(8, 1, 'BLUE-CODE-100', '2026-05-17 18:08:51', 0, '2026-04-17 11:08:51', '2026-04-17 11:10:05'),
+	(9, 5, 'EXPIRED-CODE', '2025-01-01 00:00:00', 1, '2026-04-17 11:08:51', '2026-04-17 11:08:51'),
+	(10, 5, 'LOW-POINT-CODE', '2026-05-17 18:11:19', 1, '2026-04-17 11:11:19', '2026-04-17 11:11:19'),
+	(11, 1, 'TEST-001A', '2027-12-31 23:59:59', 0, '2026-04-20 07:40:41', '2026-04-20 07:46:22'),
+	(13, 1, 'TEST-002B', '2027-12-31 23:59:59', 0, '2026-04-20 08:35:46', '2026-04-20 08:38:25'),
+	(14, 999999, 'AUTO-RDM-MISS-001', '2027-12-31 23:59:59', 1, '2026-04-20 09:31:04', '2026-04-20 09:31:04'),
+	(15, 999999, 'AUTO-RDM-MISS-002', '2027-12-31 23:59:59', 1, '2026-04-20 09:37:24', '2026-04-20 09:37:24');
 
 -- Dumping structure for table membership.merchant
 CREATE TABLE IF NOT EXISTS `merchant` (
@@ -93,9 +108,9 @@ CREATE TABLE IF NOT EXISTS `points` (
   `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
   `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table membership.points: ~8 rows (approximately)
+-- Dumping data for table membership.points: ~25 rows (approximately)
 INSERT INTO `points` (`id`, `transactionId`, `memberId`, `merchantId`, `tierId`, `pointIn`, `pointOut`, `transactionDate`, `note`, `archived`, `status`, `presence`, `inputDate`, `updateDate`) VALUES
 	(5, 5, 1, 1, 1, 50000, 0, '2026-04-16 07:51:13', '', 0, 1, 1, '2026-04-16 07:51:13', '2026-04-16 07:51:44'),
 	(6, 6, 1, 1, 1, 50000, 0, '2026-04-16 07:34:32', 'POS paid transaction', 0, 1, 1, '2026-04-16 08:34:28', '2026-04-16 08:34:28'),
@@ -106,7 +121,22 @@ INSERT INTO `points` (`id`, `transactionId`, `memberId`, `merchantId`, `tierId`,
 	(11, 11, 1, 1, 1, 150000, 0, '2026-04-16 00:34:32', 'POSMANT paid transaction', 0, 1, 1, '2026-04-16 08:59:10', '2026-04-16 08:59:10'),
 	(12, 12, 1, 1, 1, 25000, 0, '2026-04-16 02:20:00', 'token header verification', 0, 1, 1, '2026-04-16 09:01:08', '2026-04-16 09:01:08'),
 	(13, 13, 1, 1, 1, 150000, 0, '2026-04-16 00:34:32', 'POSMANT paid transaction', 0, 1, 1, '2026-04-16 09:04:20', '2026-04-16 09:04:20'),
-	(14, 14, 5, 1, 1, 30000, 0, '2026-04-16 03:15:00', 'balance test with tier', 0, 1, 1, '2026-04-16 09:10:02', '2026-04-16 09:10:02');
+	(14, 14, 5, 1, 1, 30000, 0, '2026-04-16 03:15:00', 'balance test with tier', 0, 1, 1, '2026-04-16 09:10:02', '2026-04-16 09:10:02'),
+	(15, 0, 1, 1, 1, 0, 50000, '2026-04-17 04:08:58', 'Redeem - Code: TEST-REDEEM-001', 0, 1, 1, '2026-04-17 11:08:58', '2026-04-17 11:08:58'),
+	(16, 0, 1, 1, 1, 0, 50000, '2026-04-17 04:10:05', 'Redeem - Code: BLUE-CODE-100', 0, 1, 1, '2026-04-17 11:10:05', '2026-04-17 11:10:05'),
+	(17, 17, 1, 1, 1, 5000, 0, '2026-04-20 04:00:00', 'service test', 0, 1, 1, '2026-04-20 07:13:34', '2026-04-20 07:13:34'),
+	(18, 18, 1, 1, 1, 13000, 0, '2026-04-20 06:00:00', 'no jwt test', 0, 1, 1, '2026-04-20 07:18:08', '2026-04-20 07:18:08'),
+	(19, 19, 1, 1, 1, 11100, 0, '2026-04-20 07:00:00', 'TEST-001A', 0, 1, 1, '2026-04-20 07:43:41', '2026-04-20 07:43:41'),
+	(20, 0, 1, 1, 1, 0, 1000, '2026-04-20 00:46:22', 'Redeem - Code: TEST-001A', 0, 1, 1, '2026-04-20 07:46:22', '2026-04-20 07:46:22'),
+	(21, 21, 1, 1, 1, 12300, 0, '2026-04-20 08:34:04', 'TEST-002A', 0, 1, 1, '2026-04-20 08:34:04', '2026-04-20 08:34:04'),
+	(22, 22, 1, 1, 1, 12500, 0, '2026-04-20 08:38:18', 'TEST-002B', 0, 1, 1, '2026-04-20 08:38:18', '2026-04-20 08:38:18'),
+	(23, 0, 1, 1, 1, 0, 1000, '2026-04-20 01:38:25', 'Redeem - Code: TEST-002B', 0, 1, 1, '2026-04-20 08:38:25', '2026-04-20 08:38:25'),
+	(24, 24, 1, 1, 1, 15000, 0, '2026-04-20 07:30:00', 'POSTMAN test 1', 0, 1, 1, '2026-04-20 08:55:59', '2026-04-20 08:55:59'),
+	(25, 25, 1, 1, 1, 15000, 0, '2026-04-20 07:30:00', 'POSTMAN test 1', 0, 1, 1, '2026-04-20 09:08:34', '2026-04-20 09:08:34'),
+	(26, 26, 1, 1, 1, 15000, 0, '2026-04-20 07:30:00', 'POSTMAN test 1', 0, 1, 1, '2026-04-20 09:08:42', '2026-04-20 09:08:42'),
+	(27, 27, 13, 1, 1, 20000, 0, '2026-04-20 09:24:16', 'AUTO-PHONE-002', 0, 1, 1, '2026-04-20 09:24:16', '2026-04-20 09:24:16'),
+	(28, 28, 14, 1, 1, 20000, 0, '2026-04-20 02:24:43', 'AUTO-PHONE-003', 0, 1, 1, '2026-04-20 09:24:43', '2026-04-20 09:24:43'),
+	(29, 29, 15, 1, 1, 12000, 0, '2026-04-20 02:28:25', 'AUTO-PHONE-004', 0, 1, 1, '2026-04-20 09:28:25', '2026-04-20 09:28:25');
 
 -- Dumping structure for table membership.tier
 CREATE TABLE IF NOT EXISTS `tier` (
@@ -115,6 +145,7 @@ CREATE TABLE IF NOT EXISTS `tier` (
   `percentOfCashBack` float NOT NULL DEFAULT 0,
   `accumulationAmount` int(11) NOT NULL DEFAULT 0,
   `minAmount` bigint(20) NOT NULL DEFAULT 0,
+  `maxPercentOfBill` tinyint(4) NOT NULL DEFAULT 0,
   `expDate` date NOT NULL DEFAULT '2027-01-01',
   `status` tinyint(4) NOT NULL DEFAULT 1,
   `presence` tinyint(4) NOT NULL DEFAULT 1,
@@ -124,11 +155,11 @@ CREATE TABLE IF NOT EXISTS `tier` (
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table membership.tier: ~4 rows (approximately)
-INSERT INTO `tier` (`id`, `name`, `percentOfCashBack`, `accumulationAmount`, `minAmount`, `expDate`, `status`, `presence`, `inputDate`, `updateDate`) VALUES
-	(1, 'blue', 10, 0, 100000, '2027-01-01', 1, 1, '2026-04-16 06:20:45', '2026-04-16 07:49:45'),
-	(2, 'silver', 15, 0, 500000, '2027-01-01', 1, 1, '2026-04-16 06:20:52', '2026-04-16 07:49:51'),
-	(3, 'gold', 20, 0, 1000000, '2027-01-01', 1, 1, '2026-04-16 06:20:56', '2026-04-16 07:49:31'),
-	(4, 'platinum', 30, 0, 2000000, '2027-01-01', 1, 1, '2026-04-16 06:20:58', '2026-04-16 07:49:31');
+INSERT INTO `tier` (`id`, `name`, `percentOfCashBack`, `accumulationAmount`, `minAmount`, `maxPercentOfBill`, `expDate`, `status`, `presence`, `inputDate`, `updateDate`) VALUES
+	(1, 'blue', 10, 0, 100000, 15, '2027-01-01', 1, 1, '2026-04-16 06:20:45', '2026-04-20 09:54:45'),
+	(2, 'silver', 15, 0, 500000, 15, '2027-01-01', 1, 1, '2026-04-16 06:20:52', '2026-04-20 09:54:47'),
+	(3, 'gold', 20, 0, 1000000, 15, '2027-01-01', 1, 1, '2026-04-16 06:20:56', '2026-04-20 09:54:48'),
+	(4, 'platinum', 30, 0, 2000000, 15, '2027-01-01', 1, 1, '2026-04-16 06:20:58', '2026-04-20 09:54:48');
 
 -- Dumping structure for table membership.transaction
 CREATE TABLE IF NOT EXISTS `transaction` (
@@ -149,9 +180,9 @@ CREATE TABLE IF NOT EXISTS `transaction` (
   `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
   `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='ini table untuk transaksi masuk dari POS via API atau CSV/TXT, transaction yang sudah paid dari POS di kirim ke sini untuk kalkulas % of cashback';
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='ini table untuk transaksi masuk dari POS via API atau CSV/TXT, transaction yang sudah paid dari POS di kirim ke sini untuk kalkulas % of cashback';
 
--- Dumping data for table membership.transaction: ~10 rows (approximately)
+-- Dumping data for table membership.transaction: ~25 rows (approximately)
 INSERT INTO `transaction` (`id`, `memberId`, `merchantId`, `bill`, `totalAmount`, `totalRedeem`, `redeemCode`, `approvalCode`, `billDate`, `note`, `syncType`, `archived`, `status`, `presence`, `inputDate`, `updateDate`) VALUES
 	(5, '1', 1, 'TA1', 500000, 0, '', '', '2026-04-16 07:34:32', '', 'api', 0, 1, 1, '2026-04-16 07:34:32', '2026-04-16 07:35:31'),
 	(6, '1', 1, 'UAT-POINT-001', 500000, 0, '', '', '2026-04-16 07:34:32', 'POS paid transaction', 'api', 0, 1, 1, '2026-04-16 08:34:28', '2026-04-16 08:34:28'),
@@ -162,7 +193,22 @@ INSERT INTO `transaction` (`id`, `memberId`, `merchantId`, `bill`, `totalAmount`
 	(11, '1', 1, 'TA1', 1500000, 0, '', '', '2026-04-16 00:34:32', 'POSMANT paid transaction', 'api', 0, 1, 1, '2026-04-16 08:59:10', '2026-04-16 08:59:10'),
 	(12, '1', 1, 'TOKEN-VERIFY-001', 250000, 0, '', '', '2026-04-16 02:20:00', 'token header verification', 'api', 0, 1, 1, '2026-04-16 09:01:08', '2026-04-16 09:01:08'),
 	(13, '1', 1, 'TA1', 1500000, 0, '', '', '2026-04-16 00:34:32', 'POSMANT paid transaction', 'api', 0, 1, 1, '2026-04-16 09:04:20', '2026-04-16 09:04:20'),
-	(14, '5', 1, 'TEST-BALANCE-002', 300000, 0, '', '', '2026-04-16 03:15:00', 'balance test with tier', 'api', 0, 1, 1, '2026-04-16 09:10:02', '2026-04-16 09:10:02');
+	(14, '5', 1, 'TEST-BALANCE-002', 300000, 0, '', '', '2026-04-16 03:15:00', 'balance test with tier', 'api', 0, 1, 1, '2026-04-16 09:10:02', '2026-04-16 09:10:02'),
+	(15, '1', 1, 'REDEEM-TRX-001', 0, 50000, 'TEST-REDEEM-001', '', '2026-04-17 04:08:58', 'Approval Code: 192DB26CF300539C5E64F8255FA8B98D', 'api', 0, 1, 1, '2026-04-17 11:08:58', '2026-04-17 11:08:58'),
+	(16, '1', 1, 'REDEEM-TRX-002', 0, 50000, 'BLUE-CODE-100', '', '2026-04-17 04:10:05', 'Approval Code: 57ADD8B9879304AE5A7BE858A94D28DB', 'api', 0, 1, 1, '2026-04-17 11:10:05', '2026-04-17 11:10:05'),
+	(17, '1', 1, 'POSV1-SVC-TEST', 50000, 0, '', '', '2026-04-20 04:00:00', 'service test', 'api', 0, 1, 1, '2026-04-20 07:13:34', '2026-04-20 07:13:34'),
+	(18, '1', 1, 'POS-V1-NOJWT-001', 130000, 0, '', '', '2026-04-20 06:00:00', 'no jwt test', 'api', 0, 1, 1, '2026-04-20 07:18:08', '2026-04-20 07:18:08'),
+	(19, '1', 1, 'TEST-001A-POINT', 111000, 0, '', '', '2026-04-20 07:00:00', 'TEST-001A', 'api', 0, 1, 1, '2026-04-20 07:43:41', '2026-04-20 07:43:41'),
+	(20, '1', 1, 'TEST-001A', 0, 1000, 'TEST-001A', '', '2026-04-20 00:46:22', 'Approval Code: 061F27EF76724C37A860B18B45792530', 'api', 0, 1, 1, '2026-04-20 07:46:22', '2026-04-20 07:46:22'),
+	(21, '1', 1, 'TEST-002A-POINT', 123000, 0, '', '', '2026-04-20 08:34:04', 'TEST-002A', 'api', 0, 1, 1, '2026-04-20 08:34:04', '2026-04-20 08:34:04'),
+	(22, '1', 1, 'TEST-002B-POINT-2', 125000, 0, '', '', '2026-04-20 08:38:18', 'TEST-002B', 'api', 0, 1, 1, '2026-04-20 08:38:18', '2026-04-20 08:38:18'),
+	(23, '1', 1, 'TEST-002B-RDM', 0, 1000, 'TEST-002B', '', '2026-04-20 01:38:25', 'Approval Code: 765207572DD182AA9053967F7D1C07B2', 'api', 0, 1, 1, '2026-04-20 08:38:25', '2026-04-20 08:38:25'),
+	(24, '1', 1, 'INV-2026-00012', 150000, 0, '', '', '2026-04-20 07:30:00', 'POSTMAN test 1', 'api', 0, 1, 1, '2026-04-20 08:55:59', '2026-04-20 08:55:59'),
+	(25, '1', 1, 'INV-2026-00012', 150000, 0, '', '', '2026-04-20 07:30:00', 'POSTMAN test 1', 'api', 0, 1, 1, '2026-04-20 09:08:34', '2026-04-20 09:08:34'),
+	(26, '1', 1, 'INV-2026-00012', 150000, 0, '', '', '2026-04-20 07:30:00', 'POSTMAN test 1', 'api', 0, 1, 1, '2026-04-20 09:08:42', '2026-04-20 09:08:42'),
+	(27, '13', 1, 'AUTO-PHONE-002-BILL', 200000, 0, '', '', '2026-04-20 09:24:16', 'AUTO-PHONE-002', 'api', 0, 1, 1, '2026-04-20 09:24:16', '2026-04-20 09:24:16'),
+	(28, '14', 1, 'AUTO-PHONE-003-BILL', 200000, 0, '', '', '2026-04-20 02:24:43', 'AUTO-PHONE-003', 'api', 0, 1, 1, '2026-04-20 09:24:43', '2026-04-20 09:24:43'),
+	(29, '15', 1, 'AUTO-PHONE-004-BILL', 120000, 0, '', '', '2026-04-20 02:28:25', 'AUTO-PHONE-004', 'api', 0, 1, 1, '2026-04-20 09:28:25', '2026-04-20 09:28:25');
 
 -- Dumping structure for table membership.users
 CREATE TABLE IF NOT EXISTS `users` (

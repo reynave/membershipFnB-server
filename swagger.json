@@ -11,7 +11,7 @@
       "name": "MIT"
     }
   },
-  "host": "localhost:3000",
+  "host": "localhost:3200",
   "servers": [
     {
       "url": "http://localhost:3200",
@@ -35,6 +35,14 @@
     {
       "name": "Points",
       "description": "Endpoint manajemen point transaksi dan balance"
+    },
+    {
+      "name": "Redeem",
+      "description": "Endpoint redeem point dari POS merchant"
+    },
+    {
+      "name": "V1 POS",
+      "description": "Endpoint POS v1 tanpa JWT (sementara)"
     }
   ],
   "schemes": [
@@ -51,7 +59,7 @@
     }
   },
   "paths": {
-    "/ping": {
+    "/api/membership/ping": {
       "get": {
         "description": "",
         "responses": {
@@ -61,7 +69,7 @@
         }
       }
     },
-    "/register": {
+    "/api/membership/auth/register": {
       "post": {
         "description": "",
         "responses": {
@@ -71,7 +79,7 @@
         }
       }
     },
-    "/login": {
+    "/api/membership/auth/login": {
       "post": {
         "description": "",
         "responses": {
@@ -81,7 +89,7 @@
         }
       }
     },
-    "/transactions": {
+    "/api/membership/points/transactions": {
       "post": {
         "description": "",
         "responses": {
@@ -91,12 +99,319 @@
         }
       }
     },
-    "/balance": {
+    "/api/membership/points/balance": {
       "get": {
         "description": "",
         "responses": {
           "default": {
             "description": ""
+          }
+        }
+      }
+    },
+    "/api/membership/points/history": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/membership/redeem/redeem": {
+      "post": {
+        "tags": [
+          "Redeem"
+        ],
+        "summary": "Redeem member point from POS",
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/pos/members/balance": {
+      "get": {
+        "tags": [
+          "V1 POS"
+        ],
+        "summary": "Check member balance for POS",
+        "description": "Contoh: GET /api/v1/pos/members/balance?id=1",
+        "responses": {
+          "200": {
+            "description": "Balance member berhasil diambil"
+          },
+          "422": {
+            "description": "Query id/phone/email tidak valid"
+          }
+        }
+      }
+    },
+    "/api/v1/pos/members/history/today": {
+      "get": {
+        "tags": [
+          "V1 POS"
+        ],
+        "summary": "Check member history today for POS",
+        "description": "Contoh: GET /api/v1/pos/members/history/today?id=1",
+        "responses": {
+          "200": {
+            "description": "History point hari ini berhasil diambil"
+          },
+          "422": {
+            "description": "Query id/phone/email tidak valid"
+          }
+        }
+      }
+    },
+    "/api/v1/pos/points/in": {
+      "post": {
+        "tags": [
+          "V1 POS"
+        ],
+        "summary": "Post point in for POS",
+        "description": "Catat transaksi POS dan tambahkan point ke member. Semua data dikirim via request body. Gunakan salah satu identifier member: id, phone, atau email. Jika kirim phone dan member belum terdaftar/inactive, sistem akan auto-create member baru dengan activated=0 dan email random agar history point langsung tercatat. POS user ID dapat dikirim via body (userId) atau header (x-pos-user-id). Contoh: POST /api/v1/pos/points/in",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["bill", "totalAmount", "billDate"],
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "description": "ID member (gunakan salah satu: id, phone, atau email)",
+                  "example": 1
+                },
+                "phone": {
+                  "type": "string",
+                  "description": "Nomor telepon member (gunakan salah satu: id, phone, atau email). Jika belum ada member aktif, akan dibuat member baru otomatis",
+                  "example": "08123456789"
+                },
+                "email": {
+                  "type": "string",
+                  "description": "Email member (gunakan salah satu: id, phone, atau email)",
+                  "example": "member@example.com"
+                },
+                "bill": {
+                  "type": "string",
+                  "maxLength": 50,
+                  "description": "Nomor atau kode bill transaksi (unik per transaksi)",
+                  "example": "INV-2026-0001"
+                },
+                "totalAmount": {
+                  "type": "number",
+                  "description": "Total nilai transaksi (harus lebih dari 0)",
+                  "example": 150000
+                },
+                "billDate": {
+                  "type": "string",
+                  "description": "Tanggal dan waktu transaksi. Format: YYYY-MM-DD HH:mm:ss atau ISO 8601",
+                  "example": "2026-04-20 14:30:00"
+                },
+                "note": {
+                  "type": "string",
+                  "maxLength": 250,
+                  "description": "Catatan tambahan (opsional)",
+                  "example": "Pembelian meja makan"
+                },
+                "userId": {
+                  "type": "string",
+                  "description": "POS user ID (opsional, alternatif dari header x-pos-user-id)",
+                  "example": "1"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Point in berhasil dibuat",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": { "type": "boolean", "example": true },
+                "message": { "type": "string", "example": "Membership point transaction created" },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "transactionId": { "type": "integer", "example": 42 },
+                    "merchantId": { "type": "integer", "example": 1 },
+                    "member": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "integer", "example": 1 },
+                        "name": { "type": "string", "example": "Budi Santoso" },
+                        "email": { "type": "string", "example": "budi@example.com" },
+                        "phone": { "type": "string", "example": "08123456789" },
+                        "tierId": { "type": "integer", "example": 2 }
+                      }
+                    },
+                    "tier": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "integer", "example": 2 },
+                        "name": { "type": "string", "example": "Gold" },
+                        "percentOfCashBack": { "type": "number", "example": 5 },
+                        "accumulationAmount": { "type": "number", "example": 0 }
+                      }
+                    },
+                    "transaction": {
+                      "type": "object",
+                      "properties": {
+                        "bill": { "type": "string", "example": "INV-2026-0001" },
+                        "totalAmount": { "type": "number", "example": 150000 },
+                        "billDate": { "type": "string", "example": "2026-04-20 14:30:00" },
+                        "note": { "type": "string", "example": "Pembelian meja makan" },
+                        "syncType": { "type": "string", "example": "api" }
+                      }
+                    },
+                    "points": {
+                      "type": "object",
+                      "properties": {
+                        "pointIn": { "type": "integer", "example": 7500 },
+                        "pointOut": { "type": "integer", "example": 0 }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Member atau tier tidak ditemukan"
+          },
+          "422": {
+            "description": "Validasi request gagal",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": { "type": "boolean", "example": false },
+                "message": { "type": "string", "example": "Validation failed" },
+                "errors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "field": { "type": "string", "example": "bill" },
+                      "message": { "type": "string", "example": "bill is required" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pos/redeem": {
+      "post": {
+        "tags": [
+          "V1 POS"
+        ],
+        "summary": "Redeem point for POS",
+        "description": "Redeem point untuk POS V1 tanpa redeemCode. Semua data POST dikirim via body object. Gunakan salah satu identifier member: id, phone, atau email. Jika kirim phone dan member belum terdaftar/inactive, sistem auto-create member baru dengan activated=0. Endpoint ini hanya memakai 1 field amount (sebagai nilai bill), lalu point redeem dihitung otomatis: maxPercentOfBill% x amount sesuai tier member. POS user ID dapat dikirim via body (userId) atau header (x-pos-user-id). Contoh: POST /api/v1/pos/redeem",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["amount", "transactionId"],
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "description": "ID member (gunakan salah satu: id, phone, atau email)",
+                  "example": 1
+                },
+                "phone": {
+                  "type": "string",
+                  "maxLength": 50,
+                  "description": "Nomor phone member (gunakan salah satu: id, phone, atau email). Jika belum ada member aktif, akan dibuat member baru otomatis",
+                  "example": "08123456789"
+                },
+                "email": {
+                  "type": "string",
+                  "description": "Email member (gunakan salah satu: id, phone, atau email)",
+                  "example": "member@example.com"
+                },
+                "amount": {
+                  "type": "number",
+                  "description": "Nilai bill transaksi. Point redeem dihitung otomatis dari maxPercentOfBill% x amount",
+                  "example": 5000
+                },
+                "transactionId": {
+                  "type": "string",
+                  "maxLength": 50,
+                  "description": "ID atau nomor transaksi POS yang terkait dengan redeem ini (unik)",
+                  "example": "TRX-2026-0099"
+                },
+                "userId": {
+                  "type": "string",
+                  "description": "POS user ID (opsional, alternatif dari header x-pos-user-id)",
+                  "example": "1"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Redeem berhasil",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": { "type": "boolean", "example": true },
+                "message": { "type": "string", "example": "Point redeemed successfully" },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "point": { "type": "integer", "description": "Jumlah point yang berhasil diredeem", "example": 5000 },
+                    "approvalCode": { "type": "string", "description": "Kode approval unik sebagai bukti redeem berhasil", "example": "A3F8C1D2E4B5F6A7C8D9E0F1A2B3C4D5" },
+                    "status": { "type": "string", "example": "success" },
+                    "maxPercentOfBill": { "type": "number", "example": 15 },
+                    "maxAllowedPoint": { "type": "number", "example": 15000 },
+                    "totalAmount": { "type": "number", "example": 5000 }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Saldo point tidak mencukupi atau bill amount tidak memenuhi batas redeem maxPercentOfBill"
+          },
+          "404": {
+            "description": "Member atau tier tidak ditemukan"
+          },
+          "422": {
+            "description": "Validasi request gagal",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": { "type": "boolean", "example": false },
+                "message": { "type": "string", "example": "Validation failed" },
+                "errors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "field": { "type": "string", "example": "amount" },
+                      "message": { "type": "string", "example": "amount must be a number greater than 0" }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

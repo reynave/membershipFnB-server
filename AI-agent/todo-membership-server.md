@@ -43,6 +43,7 @@
 	- header: `token` (identifikasi merchant/POS)
 	- body: `{ redeemCode, amount (=pointOut), transactionId }`
 	- validasi: redeemCode valid, tidak expired, member punya cukup point
+	- validasi: `amount >= tier.minAmount` (jika minAmount > 0), jika kurang return 400
 	- return: `{ point, approvalCode, status: 'success' }`
 	- insert ke `points` table: `pointOut = amount`
 	- insert ke `transaction` table: `totalRedeem = amount`
@@ -53,6 +54,7 @@
 
 ### Catatan
 
+- 2026-04-20: Tambah validasi `tier.minAmount` di endpoint redeem POS V1 (`executeRedeemPointV1ByMember`). Jika `minAmount > 0` dan `amount < minAmount`, request ditolak 400. Logika ada di `redeem.service.js`.
 - Header untuk API transaksi point sekarang menggunakan `token`, bukan `barrier`.
 - Dokumen flow transaksi point sudah diperbarui di `AI-agent/membership-point.md`.
 - Dokumentasi API lengkap dengan Swagger sudah dibuat dan terintegrasi ke Express server:

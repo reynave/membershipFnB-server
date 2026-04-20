@@ -17,6 +17,7 @@ const { registerSocketHandlers } = require('./sockets');
 const healthRoutes = require('./routes/health.routes');
 const adminRoutes = require('./routes/admin');
 const membershipRoutes = require('./routes/membership');
+const posV1Routes = require('./routes/v1/pos.router');
 
 const app = express();
 const server = http.createServer(app);
@@ -55,6 +56,9 @@ app.use('/api/admin', adminRoutes);
 
 // --- API Membership (user app) ---
 app.use('/api/membership', membershipRoutes);
+
+// --- API POS v1 (POS software) ---
+app.use('/api/v1/pos', posV1Routes);
 
 // MEMBERHISP LOGIN AND REGISTRATION ROUTES ARE IN THE MEMBERSHIP ROUTES, NOT ADMIN ROUTES. ADMIN ROUTES ARE FOR ADMIN OFFICE ONLY.
 

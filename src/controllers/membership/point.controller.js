@@ -1,3 +1,4 @@
+const { ContextBuilder } = require('express-validator/lib/context-builder');
 const { fail, success } = require('../../helpers/response');
 const pointService = require('../../modules/membership/point.service');
 
@@ -75,6 +76,7 @@ const createTransactionPoint = async (req, res, next) => {
 };
 
 const getTotalPoints = async (req, res, next) => {
+  console.log('Fetching total points for memberId:', req.query.id); // Debug log
   try {
     const memberId = req.user.id;
     const result = await pointService.getTotalPoints(memberId);
