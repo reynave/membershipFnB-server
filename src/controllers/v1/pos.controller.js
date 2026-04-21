@@ -101,6 +101,11 @@ const resolvePosUserId = (req) => {
   return fromJwt || fromHeader || fromBody || '1';
 };
 
+const resolvePosMerchantId = (req) => {
+  const merchantId = Number(req.posUser?.merchantId || 0);
+  return Number.isInteger(merchantId) && merchantId > 0 ? merchantId : 0;
+};
+
 const getBalance = async (req, res, next) => {
   try {
     const queryErrors = validateMemberIdentifierQuery(req.query || {});
@@ -172,6 +177,7 @@ const createPointIn = async (req, res, next) => {
 
     const result = await pointService.createTransactionPointByPosUser({
       posUserId: resolvePosUserId(req),
+      merchantId: resolvePosMerchantId(req),
       payload: req.body,
       memberIdentifier: buildMemberIdentifier(req.body),
       io: req.io
@@ -193,6 +199,7 @@ const redeemPoint = async (req, res, next) => {
 
     const result = await redeemService.redeemPointByPosUser({
       posUserId: resolvePosUserId(req),
+      merchantId: resolvePosMerchantId(req),
       payload: {
         ...req.body,
         memberIdentifier: buildMemberIdentifier(req.body)

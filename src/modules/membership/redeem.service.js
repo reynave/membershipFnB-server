@@ -170,6 +170,14 @@ const getMerchantByPosUserId = async (connection, posUserId) => {
   return merchantTokens[0];
 };
 
+const resolveMerchantByAccess = async (connection, { posUserId, merchantId }) => {
+  if (Number.isInteger(Number(merchantId)) && Number(merchantId) > 0) {
+    return { userId: String(posUserId), merchantId: Number(merchantId) };
+  }
+
+  return getMerchantByPosUserId(connection, posUserId);
+};
+
 const executeRedeemPoint = async ({ merchantId, payload, io }) => {
   const redeemCode = String(payload.redeemCode || '').trim();
   const phone = String(payload.phone || '').trim();
@@ -477,7 +485,7 @@ const redeemPoint = async ({ token, payload, io }) => {
   }
 };
 
-const redeemPointByPosUser = async ({ posUserId, payload, io }) => {
+const redeemPointByPosUser = async ({ posUserId, merchantId, payload, io }) => {
   if (!posUserId) {
     throw createHttpError('POS user is required', 401);
   }
@@ -486,7 +494,7 @@ const redeemPointByPosUser = async ({ posUserId, payload, io }) => {
   const connection = await pool.getConnection();
 
   try {
-    const merchant = await getMerchantByPosUserId(connection, posUserId);
+    const merchant = await resolveMerchantByAccess(connection, { posUserId, merchantId });
     return await executeRedeemPointV1ByMember({ merchantId: merchant.merchantId, payload, io });
   } finally {
     await connection.release();

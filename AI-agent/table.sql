@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS `members` (
   `phone` varchar(50) NOT NULL DEFAULT '0',
   `name` varchar(120) NOT NULL,
   `email` varchar(190) NOT NULL,
+  `birthdate` date NOT NULL DEFAULT '1990-01-01',
   `password_hash` varchar(255) NOT NULL,
   `status` tinyint(4) NOT NULL DEFAULT 1,
   `verified` tinyint(4) NOT NULL DEFAULT 0,
@@ -31,19 +32,21 @@ CREATE TABLE IF NOT EXISTS `members` (
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE KEY `uq_members_email` (`email`),
   UNIQUE KEY `phone` (`phone`)
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table membership.members: ~9 rows (approximately)
-INSERT INTO `members` (`id`, `tierId`, `phone`, `name`, `email`, `password_hash`, `status`, `verified`, `activated`, `presence`, `inputDate`, `updateDate`) VALUES
-	(1, 1, '111', 'testing', 'cso1@email.com', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 0, 1, 1, '2026-04-15 11:26:14', '2026-04-20 09:13:08'),
-	(2, 1, '2222', 'Revisi Schema', 'schema.revisi@example.com', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 0, 1, 1, '2026-04-15 11:01:51', '2026-04-20 09:13:10'),
-	(4, 1, '3333', 'uat', 'uat@email.com', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 0, 1, 1, '2026-04-15 11:31:42', '2026-04-20 09:13:11'),
-	(5, 1, '4444', 'Test Member', 'testmember@example.com', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 0, 1, 1, '2026-04-16 09:09:38', '2026-04-20 09:13:13'),
-	(6, 0, '5555', 'Test Member 2', 'testmember2@example.com', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 0, 1, 1, '2026-04-16 09:09:47', '2026-04-20 09:13:14'),
-	(12, 1, '16666', 'Demo User', 'demo.user@example.com', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 0, 1, 1, '2026-04-15 10:48:14', '2026-04-20 09:13:16'),
-	(13, 1, '0899911122244', 'Guest 2244', 'auto-0899911122244-1776677056242-80f51698743a@guest.membership.local', '$2b$04$1Vym9vyX5kpMqgWsn7ga8OPT28/R5cbcUVxuYAojbMQuVa8QaT1nm', 1, 0, 0, 1, '2026-04-20 09:24:16', '2026-04-20 09:24:16'),
-	(14, 1, '0899911122255', 'Guest 2255', 'auto-0899911122255-1776677083345-cddce4241ec5@guest.membership.local', '$2b$04$S8d.5aqm3OvzRqSHnB11EuoXNERBvDck4HX98Gt9zhV3VjVifEC7.', 1, 0, 0, 1, '2026-04-20 09:24:43', '2026-04-20 09:24:43'),
-	(15, 1, '0899911122266', 'Guest 2266', 'auto-0899911122266-1776677305520-df29e99810ed@guest.membership.local', '$2b$04$XGmlXMW2NvWDowgwW1ONRuETwSL9F4O.IxWqtdELIduRhKBn38nNS', 1, 0, 0, 1, '2026-04-20 09:28:25', '2026-04-20 09:28:25');
+INSERT INTO `members` (`id`, `tierId`, `phone`, `name`, `email`, `birthdate`, `password_hash`, `status`, `verified`, `activated`, `presence`, `inputDate`, `updateDate`) VALUES
+	(1, 1, '111', 'testing', 'cso1@email.com', '1990-01-01', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 0, 1, 1, '2026-04-15 11:26:14', '2026-04-20 09:13:08'),
+	(2, 1, '2222', 'Revisi Schema', 'schema.revisi@example.com', '1990-01-01', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 0, 1, 1, '2026-04-15 11:01:51', '2026-04-20 09:13:10'),
+	(4, 1, '3333', 'uat', 'uat@email.com', '1990-01-01', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 0, 1, 1, '2026-04-15 11:31:42', '2026-04-20 09:13:11'),
+	(5, 1, '4444', 'Test Member', 'testmember@example.com', '1990-01-01', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 0, 1, 1, '2026-04-16 09:09:38', '2026-04-20 09:13:13'),
+	(6, 0, '5555', 'Test Member 2', 'testmember2@example.com', '1990-01-01', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 0, 1, 1, '2026-04-16 09:09:47', '2026-04-20 09:13:14'),
+	(12, 1, '16666', 'Demo User', 'demo.user@example.com', '1990-01-01', '$2b$04$AkCl96DDqLukffDmY0.wNuiXQ.xHsbfavJRfQUM.kgWX2hteMH9vi', 1, 0, 1, 1, '2026-04-15 10:48:14', '2026-04-20 09:13:16'),
+	(13, 1, '0899911122244', 'Guest 2244', 'auto-0899911122244-1776677056242-80f51698743a@guest.membership.local', '1990-01-01', '$2b$04$1Vym9vyX5kpMqgWsn7ga8OPT28/R5cbcUVxuYAojbMQuVa8QaT1nm', 1, 0, 0, 1, '2026-04-20 09:24:16', '2026-04-20 09:24:16'),
+	(14, 1, '0899911122255', 'Guest 2255', 'auto-0899911122255-1776677083345-cddce4241ec5@guest.membership.local', '1990-01-01', '$2b$04$S8d.5aqm3OvzRqSHnB11EuoXNERBvDck4HX98Gt9zhV3VjVifEC7.', 1, 0, 0, 1, '2026-04-20 09:24:43', '2026-04-20 09:24:43'),
+	(15, 1, '0899911122266', 'Guest 2266', 'auto-0899911122266-1776677305520-df29e99810ed@guest.membership.local', '1990-01-01', '$2b$04$XGmlXMW2NvWDowgwW1ONRuETwSL9F4O.IxWqtdELIduRhKBn38nNS', 1, 0, 0, 1, '2026-04-20 09:28:25', '2026-04-20 09:28:25'),
+	(17, 1, '1abs11', 'Guest bs11', 'auto-111-1776679983543-69ed505fa544@guest.membership.local', '1990-01-01', '$2b$04$SsGa.tqd4v/pQD54FgAoDubXLZ4cqAAI/WhhCf5UFCdxzJH7pOjlm', 1, 0, 0, 1, '2026-04-20 10:13:03', '2026-04-20 10:13:03'),
+	(18, 1, '88881111', 'Guest 1111', 'auto-88881111-1776682121686-93d658ebb36d@guest.membership.local', '1990-01-01', '$2b$04$rOVWqVVcnQ0BOgvM2O0PbOFaPBKqXupRSalbE0I8eVLAPhhk.EwtG', 1, 0, 0, 1, '2026-04-20 10:48:41', '2026-04-20 10:48:41');
 
 -- Dumping structure for table membership.members_code
 CREATE TABLE IF NOT EXISTS `members_code` (
@@ -108,9 +111,9 @@ CREATE TABLE IF NOT EXISTS `points` (
   `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
   `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table membership.points: ~25 rows (approximately)
+-- Dumping data for table membership.points: ~29 rows (approximately)
 INSERT INTO `points` (`id`, `transactionId`, `memberId`, `merchantId`, `tierId`, `pointIn`, `pointOut`, `transactionDate`, `note`, `archived`, `status`, `presence`, `inputDate`, `updateDate`) VALUES
 	(5, 5, 1, 1, 1, 50000, 0, '2026-04-16 07:51:13', '', 0, 1, 1, '2026-04-16 07:51:13', '2026-04-16 07:51:44'),
 	(6, 6, 1, 1, 1, 50000, 0, '2026-04-16 07:34:32', 'POS paid transaction', 0, 1, 1, '2026-04-16 08:34:28', '2026-04-16 08:34:28'),
@@ -124,19 +127,40 @@ INSERT INTO `points` (`id`, `transactionId`, `memberId`, `merchantId`, `tierId`,
 	(14, 14, 5, 1, 1, 30000, 0, '2026-04-16 03:15:00', 'balance test with tier', 0, 1, 1, '2026-04-16 09:10:02', '2026-04-16 09:10:02'),
 	(15, 0, 1, 1, 1, 0, 50000, '2026-04-17 04:08:58', 'Redeem - Code: TEST-REDEEM-001', 0, 1, 1, '2026-04-17 11:08:58', '2026-04-17 11:08:58'),
 	(16, 0, 1, 1, 1, 0, 50000, '2026-04-17 04:10:05', 'Redeem - Code: BLUE-CODE-100', 0, 1, 1, '2026-04-17 11:10:05', '2026-04-17 11:10:05'),
-	(17, 17, 1, 1, 1, 5000, 0, '2026-04-20 04:00:00', 'service test', 0, 1, 1, '2026-04-20 07:13:34', '2026-04-20 07:13:34'),
-	(18, 18, 1, 1, 1, 13000, 0, '2026-04-20 06:00:00', 'no jwt test', 0, 1, 1, '2026-04-20 07:18:08', '2026-04-20 07:18:08'),
-	(19, 19, 1, 1, 1, 11100, 0, '2026-04-20 07:00:00', 'TEST-001A', 0, 1, 1, '2026-04-20 07:43:41', '2026-04-20 07:43:41'),
-	(20, 0, 1, 1, 1, 0, 1000, '2026-04-20 00:46:22', 'Redeem - Code: TEST-001A', 0, 1, 1, '2026-04-20 07:46:22', '2026-04-20 07:46:22'),
-	(21, 21, 1, 1, 1, 12300, 0, '2026-04-20 08:34:04', 'TEST-002A', 0, 1, 1, '2026-04-20 08:34:04', '2026-04-20 08:34:04'),
-	(22, 22, 1, 1, 1, 12500, 0, '2026-04-20 08:38:18', 'TEST-002B', 0, 1, 1, '2026-04-20 08:38:18', '2026-04-20 08:38:18'),
-	(23, 0, 1, 1, 1, 0, 1000, '2026-04-20 01:38:25', 'Redeem - Code: TEST-002B', 0, 1, 1, '2026-04-20 08:38:25', '2026-04-20 08:38:25'),
-	(24, 24, 1, 1, 1, 15000, 0, '2026-04-20 07:30:00', 'POSTMAN test 1', 0, 1, 1, '2026-04-20 08:55:59', '2026-04-20 08:55:59'),
-	(25, 25, 1, 1, 1, 15000, 0, '2026-04-20 07:30:00', 'POSTMAN test 1', 0, 1, 1, '2026-04-20 09:08:34', '2026-04-20 09:08:34'),
-	(26, 26, 1, 1, 1, 15000, 0, '2026-04-20 07:30:00', 'POSTMAN test 1', 0, 1, 1, '2026-04-20 09:08:42', '2026-04-20 09:08:42'),
-	(27, 27, 13, 1, 1, 20000, 0, '2026-04-20 09:24:16', 'AUTO-PHONE-002', 0, 1, 1, '2026-04-20 09:24:16', '2026-04-20 09:24:16'),
 	(28, 28, 14, 1, 1, 20000, 0, '2026-04-20 02:24:43', 'AUTO-PHONE-003', 0, 1, 1, '2026-04-20 09:24:43', '2026-04-20 09:24:43'),
-	(29, 29, 15, 1, 1, 12000, 0, '2026-04-20 02:28:25', 'AUTO-PHONE-004', 0, 1, 1, '2026-04-20 09:28:25', '2026-04-20 09:28:25');
+	(29, 29, 15, 1, 1, 12000, 0, '2026-04-20 02:28:25', 'AUTO-PHONE-004', 0, 1, 1, '2026-04-20 09:28:25', '2026-04-20 09:28:25'),
+	(30, 0, 15, 1, 1, 0, 5000, '2026-04-20 03:02:56', 'Redeem POS V1 - POSV1-RDM-NOCODE-001', 0, 1, 1, '2026-04-20 10:02:56', '2026-04-20 10:02:56'),
+	(31, 0, 15, 1, 1, 0, 750, '2026-04-20 03:08:11', 'Redeem POS V1 - POSV1-RDM-NOCODE-003', 0, 1, 1, '2026-04-20 10:08:11', '2026-04-20 10:08:11'),
+	(32, 0, 1, 1, 1, 0, 750, '2026-04-20 03:08:49', 'Redeem POS V1 - TRX-2026-00129', 0, 1, 1, '2026-04-20 10:08:49', '2026-04-20 10:08:49'),
+	(33, 0, 1, 1, 1, 0, 37500, '2026-04-20 03:11:45', 'Redeem POS V1 - TRX-2026-00129', 0, 1, 1, '2026-04-20 10:11:45', '2026-04-20 10:11:45'),
+	(34, 0, 1, 1, 1, 0, 37500, '2026-04-20 03:12:15', 'Redeem POS V1 - TRX-2026-00129', 0, 1, 1, '2026-04-20 10:12:15', '2026-04-20 10:12:15'),
+	(35, 0, 1, 1, 1, 0, 52500, '2026-04-20 03:13:14', 'Redeem POS V1 - TRX-2026-00129', 0, 1, 1, '2026-04-20 10:13:14', '2026-04-20 10:13:14'),
+	(36, 0, 1, 1, 1, 0, 52500, '2026-04-20 03:35:50', 'Redeem POS V1 - TRX-2026-00129', 0, 1, 1, '2026-04-20 10:35:50', '2026-04-20 10:35:50'),
+	(37, 0, 1, 1, 1, 0, 52500, '2026-04-20 03:44:30', 'Redeem POS V1 - TRX-2026-00129', 0, 1, 1, '2026-04-20 10:44:30', '2026-04-20 10:44:30'),
+	(38, 0, 1, 1, 1, 0, 52500, '2026-04-20 03:45:37', 'Redeem POS V1 - TRX-2026-00129', 0, 1, 1, '2026-04-20 10:45:37', '2026-04-20 10:45:37'),
+	(39, 39, 18, 1, 1, 15000, 0, '2026-04-20 07:30:00', 'POSTMAN test 1', 0, 1, 1, '2026-04-20 10:48:41', '2026-04-20 10:48:41'),
+	(40, 40, 1, 1, 1, 15000, 0, '2026-04-20 07:30:00', 'POSTMAN test 1', 0, 1, 1, '2026-04-20 10:48:54', '2026-04-20 10:48:54'),
+	(41, 41, 1, 1, 1, 45000, 0, '2026-04-20 07:30:00', 'POSTMAN test 1', 0, 1, 1, '2026-04-20 10:49:10', '2026-04-20 10:49:10'),
+	(42, 42, 1, 1, 1, 45000, 0, '2026-04-20 07:30:00', 'POSTMAN test 1', 0, 1, 1, '2026-04-20 10:49:13', '2026-04-20 10:49:13'),
+	(43, 0, 1, 1, 1, 0, 52500, '2026-04-20 03:49:20', 'Redeem POS V1 - TRX-2026-00129', 0, 1, 1, '2026-04-20 10:49:20', '2026-04-20 10:49:20'),
+	(44, 0, 1, 1, 1, 0, 9000, '2026-04-20 03:58:58', 'Redeem POS V1 - TRX-2026-00129', 0, 1, 1, '2026-04-20 10:58:58', '2026-04-20 10:58:58');
+
+-- Dumping structure for table membership.promo
+CREATE TABLE IF NOT EXISTS `promo` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `img` varchar(250) NOT NULL,
+  `description` mediumtext DEFAULT NULL,
+  `promoType` varchar(50) DEFAULT NULL,
+  `startDate` date DEFAULT NULL,
+  `endDate` date DEFAULT NULL,
+  `presence` tinyint(1) DEFAULT 1,
+  `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table membership.promo: ~0 rows (approximately)
 
 -- Dumping structure for table membership.tier
 CREATE TABLE IF NOT EXISTS `tier` (
@@ -180,9 +204,9 @@ CREATE TABLE IF NOT EXISTS `transaction` (
   `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
   `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='ini table untuk transaksi masuk dari POS via API atau CSV/TXT, transaction yang sudah paid dari POS di kirim ke sini untuk kalkulas % of cashback';
+) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='ini table untuk transaksi masuk dari POS via API atau CSV/TXT, transaction yang sudah paid dari POS di kirim ke sini untuk kalkulas % of cashback';
 
--- Dumping data for table membership.transaction: ~25 rows (approximately)
+-- Dumping data for table membership.transaction: ~26 rows (approximately)
 INSERT INTO `transaction` (`id`, `memberId`, `merchantId`, `bill`, `totalAmount`, `totalRedeem`, `redeemCode`, `approvalCode`, `billDate`, `note`, `syncType`, `archived`, `status`, `presence`, `inputDate`, `updateDate`) VALUES
 	(5, '1', 1, 'TA1', 500000, 0, '', '', '2026-04-16 07:34:32', '', 'api', 0, 1, 1, '2026-04-16 07:34:32', '2026-04-16 07:35:31'),
 	(6, '1', 1, 'UAT-POINT-001', 500000, 0, '', '', '2026-04-16 07:34:32', 'POS paid transaction', 'api', 0, 1, 1, '2026-04-16 08:34:28', '2026-04-16 08:34:28'),
@@ -196,19 +220,24 @@ INSERT INTO `transaction` (`id`, `memberId`, `merchantId`, `bill`, `totalAmount`
 	(14, '5', 1, 'TEST-BALANCE-002', 300000, 0, '', '', '2026-04-16 03:15:00', 'balance test with tier', 'api', 0, 1, 1, '2026-04-16 09:10:02', '2026-04-16 09:10:02'),
 	(15, '1', 1, 'REDEEM-TRX-001', 0, 50000, 'TEST-REDEEM-001', '', '2026-04-17 04:08:58', 'Approval Code: 192DB26CF300539C5E64F8255FA8B98D', 'api', 0, 1, 1, '2026-04-17 11:08:58', '2026-04-17 11:08:58'),
 	(16, '1', 1, 'REDEEM-TRX-002', 0, 50000, 'BLUE-CODE-100', '', '2026-04-17 04:10:05', 'Approval Code: 57ADD8B9879304AE5A7BE858A94D28DB', 'api', 0, 1, 1, '2026-04-17 11:10:05', '2026-04-17 11:10:05'),
-	(17, '1', 1, 'POSV1-SVC-TEST', 50000, 0, '', '', '2026-04-20 04:00:00', 'service test', 'api', 0, 1, 1, '2026-04-20 07:13:34', '2026-04-20 07:13:34'),
-	(18, '1', 1, 'POS-V1-NOJWT-001', 130000, 0, '', '', '2026-04-20 06:00:00', 'no jwt test', 'api', 0, 1, 1, '2026-04-20 07:18:08', '2026-04-20 07:18:08'),
-	(19, '1', 1, 'TEST-001A-POINT', 111000, 0, '', '', '2026-04-20 07:00:00', 'TEST-001A', 'api', 0, 1, 1, '2026-04-20 07:43:41', '2026-04-20 07:43:41'),
-	(20, '1', 1, 'TEST-001A', 0, 1000, 'TEST-001A', '', '2026-04-20 00:46:22', 'Approval Code: 061F27EF76724C37A860B18B45792530', 'api', 0, 1, 1, '2026-04-20 07:46:22', '2026-04-20 07:46:22'),
-	(21, '1', 1, 'TEST-002A-POINT', 123000, 0, '', '', '2026-04-20 08:34:04', 'TEST-002A', 'api', 0, 1, 1, '2026-04-20 08:34:04', '2026-04-20 08:34:04'),
-	(22, '1', 1, 'TEST-002B-POINT-2', 125000, 0, '', '', '2026-04-20 08:38:18', 'TEST-002B', 'api', 0, 1, 1, '2026-04-20 08:38:18', '2026-04-20 08:38:18'),
-	(23, '1', 1, 'TEST-002B-RDM', 0, 1000, 'TEST-002B', '', '2026-04-20 01:38:25', 'Approval Code: 765207572DD182AA9053967F7D1C07B2', 'api', 0, 1, 1, '2026-04-20 08:38:25', '2026-04-20 08:38:25'),
-	(24, '1', 1, 'INV-2026-00012', 150000, 0, '', '', '2026-04-20 07:30:00', 'POSTMAN test 1', 'api', 0, 1, 1, '2026-04-20 08:55:59', '2026-04-20 08:55:59'),
-	(25, '1', 1, 'INV-2026-00012', 150000, 0, '', '', '2026-04-20 07:30:00', 'POSTMAN test 1', 'api', 0, 1, 1, '2026-04-20 09:08:34', '2026-04-20 09:08:34'),
-	(26, '1', 1, 'INV-2026-00012', 150000, 0, '', '', '2026-04-20 07:30:00', 'POSTMAN test 1', 'api', 0, 1, 1, '2026-04-20 09:08:42', '2026-04-20 09:08:42'),
 	(27, '13', 1, 'AUTO-PHONE-002-BILL', 200000, 0, '', '', '2026-04-20 09:24:16', 'AUTO-PHONE-002', 'api', 0, 1, 1, '2026-04-20 09:24:16', '2026-04-20 09:24:16'),
 	(28, '14', 1, 'AUTO-PHONE-003-BILL', 200000, 0, '', '', '2026-04-20 02:24:43', 'AUTO-PHONE-003', 'api', 0, 1, 1, '2026-04-20 09:24:43', '2026-04-20 09:24:43'),
-	(29, '15', 1, 'AUTO-PHONE-004-BILL', 120000, 0, '', '', '2026-04-20 02:28:25', 'AUTO-PHONE-004', 'api', 0, 1, 1, '2026-04-20 09:28:25', '2026-04-20 09:28:25');
+	(29, '15', 1, 'AUTO-PHONE-004-BILL', 120000, 0, '', '', '2026-04-20 02:28:25', 'AUTO-PHONE-004', 'api', 0, 1, 1, '2026-04-20 09:28:25', '2026-04-20 09:28:25'),
+	(30, '15', 1, 'POSV1-RDM-NOCODE-001', 100000, 5000, '', '', '2026-04-20 03:02:56', 'Approval Code: 4A83D56EA9FFF839134338DA449D4A90', 'api', 0, 1, 1, '2026-04-20 10:02:56', '2026-04-20 10:02:56'),
+	(31, '15', 1, 'POSV1-RDM-NOCODE-003', 5000, 750, '', '', '2026-04-20 03:08:11', 'Approval Code: B50C5E86582A526ABDFA0AB82A005D32', 'api', 0, 1, 1, '2026-04-20 10:08:11', '2026-04-20 10:08:11'),
+	(32, '1', 1, 'TRX-2026-00129', 5002, 750, '', '', '2026-04-20 03:08:49', 'Approval Code: FDF2760A549F7DB68972AB28E525EBE8', 'api', 0, 1, 1, '2026-04-20 10:08:49', '2026-04-20 10:08:49'),
+	(33, '1', 1, 'TRX-2026-00129', 250002, 37500, '', '9CD16618B2CE66C74D399F9C1227E3F7', '2026-04-20 03:11:45', 'Approval Code: 9CD16618B2CE66C74D399F9C1227E3F7', 'api', 0, 1, 1, '2026-04-20 10:11:45', '2026-04-20 10:11:45'),
+	(34, '1', 1, 'TRX-2026-00129', 250002, 37500, '', '056E19A3FFC0F46B43A18ECA2EBC5520', '2026-04-20 03:12:15', 'Approval Code: 056E19A3FFC0F46B43A18ECA2EBC5520', 'api', 0, 1, 1, '2026-04-20 10:12:15', '2026-04-20 10:12:15'),
+	(35, '1', 1, 'TRX-2026-00129', 350002, 52500, '', '024DF36E4BE85E999BF77823AF78E2A0', '2026-04-20 03:13:14', 'Approval Code: 024DF36E4BE85E999BF77823AF78E2A0', 'api', 0, 1, 1, '2026-04-20 10:13:14', '2026-04-20 10:13:14'),
+	(36, '1', 1, 'TRX-2026-00129', 350002, 52500, '', '21519FE181071C382BD1FDAE63C1F84F', '2026-04-20 03:35:50', 'Approval Code: 21519FE181071C382BD1FDAE63C1F84F', 'api', 0, 1, 1, '2026-04-20 10:35:50', '2026-04-20 10:35:50'),
+	(37, '1', 1, 'TRX-2026-00129', 350002, 52500, '', '6E64679B647871DE811E724A8E656E95', '2026-04-20 03:44:30', 'Approval Code: 6E64679B647871DE811E724A8E656E95', 'api', 0, 1, 1, '2026-04-20 10:44:30', '2026-04-20 10:44:30'),
+	(38, '1', 1, 'TRX-2026-00129', 350002, 52500, '', '597A5459E0AB5AD42C9EDFE113F3683F', '2026-04-20 03:45:37', 'Approval Code: 597A5459E0AB5AD42C9EDFE113F3683F', 'api', 0, 1, 1, '2026-04-20 10:45:37', '2026-04-20 10:45:37'),
+	(39, '18', 1, 'INV-2026-00014', 150000, 0, '', '', '2026-04-20 07:30:00', 'POSTMAN test 1', 'api', 0, 1, 1, '2026-04-20 10:48:41', '2026-04-20 10:48:41'),
+	(40, '1', 1, 'INV-2026-00014', 150000, 0, '', '', '2026-04-20 07:30:00', 'POSTMAN test 1', 'api', 0, 1, 1, '2026-04-20 10:48:54', '2026-04-20 10:48:54'),
+	(41, '1', 1, 'INV-2026-00014', 450000, 0, '', '', '2026-04-20 07:30:00', 'POSTMAN test 1', 'api', 0, 1, 1, '2026-04-20 10:49:10', '2026-04-20 10:49:10'),
+	(42, '1', 1, 'INV-2026-00014', 450000, 0, '', '', '2026-04-20 07:30:00', 'POSTMAN test 1', 'api', 0, 1, 1, '2026-04-20 10:49:13', '2026-04-20 10:49:13'),
+	(43, '1', 1, 'TRX-2026-00129', 350002, 52500, '', '023E495EAF238BD006083F7613A2D2DD', '2026-04-20 03:49:20', 'Approval Code: 023E495EAF238BD006083F7613A2D2DD', 'api', 0, 1, 1, '2026-04-20 10:49:20', '2026-04-20 10:49:20'),
+	(44, '1', 1, 'TRX-2026-00129', 60002, 9000, '', 'EA729C9D02610092AF37602A0AEDB28D', '2026-04-20 03:58:58', 'Approval Code: EA729C9D02610092AF37602A0AEDB28D', 'api', 0, 1, 1, '2026-04-20 10:58:58', '2026-04-20 10:58:58');
 
 -- Dumping structure for table membership.users
 CREATE TABLE IF NOT EXISTS `users` (
@@ -216,6 +245,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `name` varchar(120) NOT NULL,
   `email` varchar(190) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
+  `note` varchar(250) NOT NULL,
   `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
   `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
@@ -223,8 +253,8 @@ CREATE TABLE IF NOT EXISTS `users` (
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table membership.users: ~1 rows (approximately)
-INSERT INTO `users` (`id`, `name`, `email`, `password_hash`, `inputDate`, `updateDate`) VALUES
-	(1, 'admin', 'admin@admin.com', '123123', '2026-04-16 07:59:39', '2026-04-16 07:59:50');
+INSERT INTO `users` (`id`, `name`, `email`, `password_hash`, `note`, `inputDate`, `updateDate`) VALUES
+	(1, 'admin', 'admin@admin.com', '$2b$10$Vn6IhUeIs6m2RwJKw4oZqO8DdDSvrG3BuzszhDHTvPwRnR0n.Wt3q', 'pass : admin123', '2026-04-16 07:59:39', '2026-04-21 08:21:50');
 
 -- Dumping structure for table membership.users_token
 CREATE TABLE IF NOT EXISTS `users_token` (
@@ -236,11 +266,43 @@ CREATE TABLE IF NOT EXISTS `users_token` (
   `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE KEY `uq_users_email` (`token`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table membership.users_token: ~1 rows (approximately)
+-- Dumping data for table membership.users_token: ~2 rows (approximately)
 INSERT INTO `users_token` (`id`, `userId`, `merchantId`, `token`, `inputDate`, `updateDate`) VALUES
-	(1, '1', 1, 'tokensimpan.database', '2026-04-16 07:59:58', '2026-04-16 08:08:50');
+	(1, '1', 1, 'tokensimpan.database', '2026-04-16 07:59:58', '2026-04-16 08:08:50'),
+	(3, '1', 2, 'pos_live_d2d4b9cc18f1b52aed1aaf121643deeba997849ebbb8eaa19771e6c921255c97', '2026-04-21 08:52:33', '2026-04-21 08:52:33');
+
+-- Dumping structure for table membership.voucher
+CREATE TABLE IF NOT EXISTS `voucher` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `img` varchar(100) NOT NULL,
+  `description` mediumtext DEFAULT NULL,
+  `pointsRequired` int(11) NOT NULL,
+  `startDate` date DEFAULT NULL,
+  `endDate` date DEFAULT NULL,
+  `quota` int(11) DEFAULT NULL,
+  `presence` tinyint(1) DEFAULT 1,
+  `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table membership.voucher: ~0 rows (approximately)
+
+-- Dumping structure for table membership.voucher_merchant
+CREATE TABLE IF NOT EXISTS `voucher_merchant` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `marchantId` int(11) NOT NULL DEFAULT 0,
+  `quota` smallint(6) NOT NULL DEFAULT 0,
+  `presence` tinyint(1) DEFAULT 1,
+  `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table membership.voucher_merchant: ~0 rows (approximately)
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

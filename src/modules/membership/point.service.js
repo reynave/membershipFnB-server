@@ -190,6 +190,14 @@ const getMerchantByPosUserId = async (connection, posUserId) => {
   return merchantTokens[0];
 };
 
+const resolveMerchantByAccess = async (connection, { posUserId, merchantId }) => {
+  if (Number.isInteger(Number(merchantId)) && Number(merchantId) > 0) {
+    return { userId: String(posUserId), merchantId: Number(merchantId) };
+  }
+
+  return getMerchantByPosUserId(connection, posUserId);
+};
+
 const buildPointInPayload = async ({ connection, merchant, member, payload }) => {
   const bill = String(payload.bill || '').trim();
   const note = payload.note ? String(payload.note).trim() : '';
@@ -328,7 +336,7 @@ const createTransactionPoint = async ({ token, payload }) => {
   }
 };
 
-const createTransactionPointByPosUser = async ({ posUserId, payload, memberIdentifier, io }) => {
+const createTransactionPointByPosUser = async ({ posUserId, merchantId, payload, memberIdentifier, io }) => {
   if (!posUserId) {
     throw createHttpError('POS user is required', 401);
   }
@@ -337,7 +345,7 @@ const createTransactionPointByPosUser = async ({ posUserId, payload, memberIdent
   const connection = await pool.getConnection();
 
   try {
-    const merchant = await getMerchantByPosUserId(connection, posUserId);
+    const merchant = await resolveMerchantByAccess(connection, { posUserId, merchantId });
     const member = await resolveMemberByIdentifier(connection, memberIdentifier || {}, { autoCreateByPhone: true });
     const pointInPayload = await buildPointInPayload({
       connection,
