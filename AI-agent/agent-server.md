@@ -138,7 +138,7 @@ AI-AGENT/
 
 | Method | URL | Auth | Keterangan |
 |---|---|---|---|
-| Berbagai route | `/api/admin/*` | JWT Admin | Manajemen member, laporan, dll |
+| Berbagai route | `/api/admin/*` | JWT Admin | Manajemen member, report API/HTML berbasis EJS, dll |
 
 ---
 
@@ -207,3 +207,135 @@ AI-AGENT/
 | `user/AI-AGENT/AGENT-USER.md` | Playbook pembagian peran AI vs Developer |
 | `user/stitchUser/*/code.html` | Desain referensi UI per halaman |
 | `server/swagger.json` | Kontrak API (generate ulang: `npm run swagger`) |
+| `server/src/reports/templates/*.ejs` | Template report EJS yang bisa diubah customer untuk custom tampilan report |
+
+---
+
+## 11. Konsep Report Admin (EJS First)
+
+Tujuan:
+- Report admin dikendalikan dari server menggunakan template EJS.
+- Client/customer cukup mengubah file template EJS untuk mengubah tampilan report.
+- Angular admin hanya memilih report yang dipanggil dan mengirim filter.
+
+Arsitektur ringkas:
+1. Server menyiapkan route report per reportKey.
+2. Tiap route memvalidasi auth admin dan filter query (whitelist field).
+3. Server ambil data dari DB lalu render template EJS.
+4. Endpoint yang sama bisa return HTML atau JSON sesuai kebutuhan.
+
+Konsep frontend Angular:
+1. Halaman report memiliki pilihan reportKey dan form filter.
+2. Angular memanggil endpoint report di server.
+3. Untuk output HTML, Angular merender hasil HTML dari server.
+4. Angular tidak menyimpan struktur report hardcoded.
+
+Struktur folder report yang direkomendasikan:
+- `src/reports/templates/members-report.ejs`
+- `src/reports/templates/redemptions-report.ejs`
+- `src/reports/templates/transactions-report.ejs`
+
+Aturan keamanan minimum:
+1. Dilarang menerima nama file template langsung dari query user.
+2. Wajib pakai report registry: reportKey -> template file -> query builder.
+3. SQL wajib parameterized query, dilarang string concatenation.
+4. Scope data harus tetap mengikuti role admin dan merchant.
+
+Catatan implementasi:
+- Engine Handlebars lama boleh dipertahankan sementara lalu dimigrasi bertahap ke EJS.
+- Prioritas implementasi awal: report members sebagai pola standar.
+
+---
+
+## 12. Draft Kontrak Endpoint Report EJS (Simple)
+
+Base URL:
+- `/api/admin/reports`
+
+Endpoint 1 - List report yang tersedia
+- Method: `GET`
+- URL: `/api/admin/reports`
+- Auth: JWT Admin
+- Tujuan: menampilkan daftar reportKey yang bisa dipanggil Angular.
+
+Contoh response:
+
+```json
+{
+	"success": true,
+	"data": [
+		{
+			"key": "members",
+			"label": "Members Report",
+			"supports": ["html", "json"]
+		},
+		{
+			"key": "redemptions",
+			"label": "Redemptions Report",
+			"supports": ["html", "json"]
+		}
+	]
+}
+```
+
+Endpoint 2 - Render report by key
+- Method: `GET`
+- URL: `/api/admin/reports/:reportKey`
+- Auth: JWT Admin
+- Query:
+	- `format=html|json` (default: `html`)
+	- `dateFrom` (optional, format `YYYY-MM-DD`)
+	- `dateTo` (optional, format `YYYY-MM-DD`)
+	- `merchantId` (optional)
+	- `search` (optional)
+	- `page` (optional, default `1`, only for json)
+	- `limit` (optional, default `50`, max `200`, only for json)
+
+Perilaku response:
+1. Jika `format=html`:
+	 - `Content-Type: text/html; charset=utf-8`
+	 - Body berupa HTML hasil render template EJS.
+2. Jika `format=json`:
+	 - `Content-Type: application/json`
+	 - Body berupa metadata + rows.
+
+Contoh response JSON:
+
+```json
+{
+	"success": true,
+	"meta": {
+		"reportKey": "members",
+		"generatedAt": "2026-04-22T08:30:00.000Z",
+		"page": 1,
+		"limit": 50,
+		"total": 125
+	},
+	"filters": {
+		"dateFrom": "2026-04-01",
+		"dateTo": "2026-04-22",
+		"merchantId": null,
+		"search": "andi"
+	},
+	"rows": [
+		{
+			"id": 101,
+			"name": "Andi",
+			"email": "andi@mail.com",
+			"createdAt": "2026-04-10T03:14:00.000Z"
+		}
+	]
+}
+```
+
+Error standar:
+- `400` untuk filter tidak valid atau format tidak didukung.
+- `401` jika JWT admin tidak valid.
+- `403` jika reportKey tidak diizinkan untuk role admin tersebut.
+- `404` jika reportKey tidak ditemukan dalam registry.
+- `500` untuk error internal.
+
+Catatan registry (wajib):
+- reportKey `members` -> template `members-report.ejs` + query builder members.
+- reportKey `redemptions` -> template `redemptions-report.ejs` + query builder redemptions.
+- reportKey `transactions` -> template `transactions-report.ejs` + query builder transactions.

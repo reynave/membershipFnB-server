@@ -1,0 +1,54 @@
+<div class="report-members">
+  <h1 class="fw-bold mb-3"><%= title %></h1>
+
+  <div class="meta mb-2">
+    <span class="badge bg-light text-dark border me-2">Generated at: <%= meta.generatedAt %></span>
+    <span class="badge bg-light text-dark border me-2">Total rows: <%= meta.total %></span>
+    <span class="badge bg-light text-dark border me-2">Page: <%= meta.page %></span>
+    <span class="badge bg-light text-dark border">Limit: <%= meta.limit %></span>
+  </div>
+
+  <div class="filters mb-3">
+    <span>Search: <strong><%= filters.search || '-' %></strong></span>
+    <span>Tier: <strong><%= filters.tierId || '-' %></strong></span>
+    <span>Date From: <strong><%= filters.dateFrom || '-' %></strong></span>
+    <span>Date To: <strong><%= filters.dateTo || '-' %></strong></span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Tier</th>
+          <th>Activated</th>
+          <th>Status</th>
+          <th>Joined</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (rows.length > 0) { %>
+          <% rows.forEach((row) => { %>
+            <tr>
+              <td><%= row.id %></td>
+              <td><%= row.name %></td>
+              <td><%= row.email || '-' %></td>
+              <td><%= row.phone || '-' %></td>
+              <td><%= row.tierName %></td>
+              <td><%= row.activated ? 'Yes' : 'No' %></td>
+              <td><%= row.status ? 'Active' : 'Inactive' %></td>
+              <td class="text-muted small"><%= row.createdAt %></td>
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr>
+            <td colspan="8">No data available</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>

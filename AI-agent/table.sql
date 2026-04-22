@@ -72,6 +72,25 @@ INSERT INTO `members_code` (`id`, `memberId`, `redeemCode`, `expDateTime`, `pres
 	(14, 999999, 'AUTO-RDM-MISS-001', '2027-12-31 23:59:59', 1, '2026-04-20 09:31:04', '2026-04-20 09:31:04'),
 	(15, 999999, 'AUTO-RDM-MISS-002', '2027-12-31 23:59:59', 1, '2026-04-20 09:37:24', '2026-04-20 09:37:24');
 
+-- Dumping structure for table membership.members_voucher
+CREATE TABLE IF NOT EXISTS `members_voucher` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `voucherId` int(11) NOT NULL DEFAULT 0,
+  `memberId` smallint(6) NOT NULL DEFAULT 0,
+  `barcode` varchar(50) NOT NULL DEFAULT '0',
+  `amount` int(11) NOT NULL DEFAULT 0,
+  `expiredDate` date NOT NULL DEFAULT '2028-01-01',
+  `used` tinyint(4) NOT NULL DEFAULT 0,
+  `usedDate` datetime NOT NULL DEFAULT '2000-01-01 00:00:00',
+  `usedMarchantId` int(11) NOT NULL DEFAULT 0,
+  `presence` tinyint(1) DEFAULT 1,
+  `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table membership.members_voucher: ~0 rows (approximately)
+
 -- Dumping structure for table membership.merchant
 CREATE TABLE IF NOT EXISTS `merchant` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -158,9 +177,31 @@ CREATE TABLE IF NOT EXISTS `promo` (
   `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
   `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table membership.promo: ~0 rows (approximately)
+-- Dumping data for table membership.promo: ~2 rows (approximately)
+INSERT INTO `promo` (`id`, `name`, `img`, `description`, `promoType`, `startDate`, `endDate`, `presence`, `inputDate`, `updateDate`) VALUES
+	(1, 'QA Promo API Updated', '', 'Updated promo API smoke test', 'hero', '2026-04-22', '2026-12-31', 0, '2026-04-22 06:27:41', '2026-04-22 06:27:41'),
+	(2, 'Kartini', 'http://localhost:3200/public/upload/1776840518054-1.jpg', 'A highly configurable component that helps you with selecting calendar dates.\nNgbDatepicker is meant to be displayed inline on a page or put inside a popup.', 'Promo Type', '2026-04-14', '2026-04-29', 1, '2026-04-22 06:29:15', '2026-04-22 06:48:43');
+
+-- Dumping structure for table membership.promo_merchant
+CREATE TABLE IF NOT EXISTS `promo_merchant` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `promoId` int(11) NOT NULL DEFAULT 0,
+  `marchantId` int(11) NOT NULL DEFAULT 0,
+  `presence` tinyint(1) DEFAULT 1,
+  `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table membership.promo_merchant: ~5 rows (approximately)
+INSERT INTO `promo_merchant` (`id`, `promoId`, `marchantId`, `presence`, `inputDate`, `updateDate`) VALUES
+	(1, 1, 1, 0, '2026-04-22 06:27:41', '2026-04-22 06:27:41'),
+	(2, 1, 2, 0, '2026-04-22 06:27:41', '2026-04-22 06:27:41'),
+	(3, 2, 1, 1, '2026-04-22 06:29:24', '2026-04-22 06:29:24'),
+	(4, 2, 2, 1, '2026-04-22 06:29:24', '2026-04-22 06:29:24'),
+	(5, 2, 3, 1, '2026-04-22 06:29:24', '2026-04-22 06:29:24');
 
 -- Dumping structure for table membership.tier
 CREATE TABLE IF NOT EXISTS `tier` (
@@ -246,15 +287,20 @@ CREATE TABLE IF NOT EXISTS `users` (
   `email` varchar(190) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
   `note` varchar(250) NOT NULL,
+  `isLock` tinyint(4) NOT NULL DEFAULT 0,
+  `invisibleUser` tinyint(4) NOT NULL DEFAULT 0,
+  `presence` tinyint(4) NOT NULL DEFAULT 1,
   `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
   `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_users_email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table membership.users: ~1 rows (approximately)
-INSERT INTO `users` (`id`, `name`, `email`, `password_hash`, `note`, `inputDate`, `updateDate`) VALUES
-	(1, 'admin', 'admin@admin.com', '$2b$10$Vn6IhUeIs6m2RwJKw4oZqO8DdDSvrG3BuzszhDHTvPwRnR0n.Wt3q', 'pass : admin123', '2026-04-16 07:59:39', '2026-04-21 08:21:50');
+-- Dumping data for table membership.users: ~3 rows (approximately)
+INSERT INTO `users` (`id`, `name`, `email`, `password_hash`, `note`, `isLock`, `invisibleUser`, `presence`, `inputDate`, `updateDate`) VALUES
+	(1, 'admin', 'admin@admin.com', '$2b$10$Vn6IhUeIs6m2RwJKw4oZqO8DdDSvrG3BuzszhDHTvPwRnR0n.Wt3q', 'pass : admin123', 1, 0, 1, '2026-04-16 07:59:39', '2026-04-22 07:24:35'),
+	(2, 'QA Staff Updated', 'qa.staff.1776843327@mail.com', '$2b$04$3DIBJiXqzDIddIALcfV5AelLJi.LHnkAm8waLPKcpp9A8Dx6POwkC', 'qa updated', 0, 0, 0, '2026-04-22 07:35:27', '2026-04-22 07:35:27'),
+	(3, 'Staff Delete Guard', 'staff.1776843363770@mail.com', '$2b$04$60mnwA1FnA7zbC7bw5Vx0.DZElM3oNpX6m9zf.FjwTtLhHT7OgRcq', 'staff', 0, 0, 0, '2026-04-22 07:36:03', '2026-04-22 07:36:03');
 
 -- Dumping structure for table membership.users_token
 CREATE TABLE IF NOT EXISTS `users_token` (
@@ -268,7 +314,7 @@ CREATE TABLE IF NOT EXISTS `users_token` (
   UNIQUE KEY `uq_users_email` (`token`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table membership.users_token: ~2 rows (approximately)
+-- Dumping data for table membership.users_token: ~1 rows (approximately)
 INSERT INTO `users_token` (`id`, `userId`, `merchantId`, `token`, `inputDate`, `updateDate`) VALUES
 	(1, '1', 1, 'tokensimpan.database', '2026-04-16 07:59:58', '2026-04-16 08:08:50'),
 	(3, '1', 2, 'pos_live_d2d4b9cc18f1b52aed1aaf121643deeba997849ebbb8eaa19771e6c921255c97', '2026-04-21 08:52:33', '2026-04-21 08:52:33');
@@ -280,6 +326,7 @@ CREATE TABLE IF NOT EXISTS `voucher` (
   `img` varchar(100) NOT NULL,
   `description` mediumtext DEFAULT NULL,
   `pointsRequired` int(11) NOT NULL,
+  `pointsAmount` int(11) NOT NULL,
   `startDate` date DEFAULT NULL,
   `endDate` date DEFAULT NULL,
   `quota` int(11) DEFAULT NULL,
@@ -287,22 +334,35 @@ CREATE TABLE IF NOT EXISTS `voucher` (
   `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
   `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table membership.voucher: ~0 rows (approximately)
+-- Dumping data for table membership.voucher: ~4 rows (approximately)
+INSERT INTO `voucher` (`id`, `name`, `img`, `description`, `pointsRequired`, `pointsAmount`, `startDate`, `endDate`, `quota`, `presence`, `inputDate`, `updateDate`) VALUES
+	(1, 'QA Voucher API Updated', '', 'Updated from automated API QA', 60000, 60000, '2026-04-22', '2026-12-31', 120, 0, '2026-04-22 05:42:05', '2026-04-22 05:42:06'),
+	(2, 'QA Voucher API Updated', '', 'Updated from automated API QA', 60000, 60000, '2026-04-22', '2026-12-31', 120, 1, '2026-04-22 05:42:22', '2026-04-22 05:51:52'),
+	(3, 'QA Voucher Invalid Test', '', 'negative test', 10000, 10000, '2026-04-22', '2026-12-31', 10, 1, '2026-04-22 05:42:33', '2026-04-22 05:51:51'),
+	(4, 'test', 'http://localhost:3200/public/upload/1776840629633-3.jpg', NULL, 10000, 10000, '2026-04-15', '2026-06-03', 1000, 1, '2026-04-22 05:51:22', '2026-04-22 06:50:31');
 
 -- Dumping structure for table membership.voucher_merchant
 CREATE TABLE IF NOT EXISTS `voucher_merchant` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
+  `voucherId` int(11) NOT NULL DEFAULT 0,
   `marchantId` int(11) NOT NULL DEFAULT 0,
   `quota` smallint(6) NOT NULL DEFAULT 0,
   `presence` tinyint(1) DEFAULT 1,
   `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
   `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table membership.voucher_merchant: ~0 rows (approximately)
+-- Dumping data for table membership.voucher_merchant: ~6 rows (approximately)
+INSERT INTO `voucher_merchant` (`id`, `voucherId`, `marchantId`, `quota`, `presence`, `inputDate`, `updateDate`) VALUES
+	(1, 1, 1, 0, 0, '2026-04-22 05:42:06', '2026-04-22 05:42:06'),
+	(2, 1, 2, 0, 0, '2026-04-22 05:42:06', '2026-04-22 05:42:06'),
+	(3, 2, 1, 0, 0, '2026-04-22 05:42:22', '2026-04-22 05:42:22'),
+	(4, 2, 2, 0, 0, '2026-04-22 05:42:22', '2026-04-22 05:42:22'),
+	(5, 4, 1, 0, 0, '2026-04-22 05:59:02', '2026-04-22 05:59:12'),
+	(6, 4, 2, 0, 0, '2026-04-22 05:59:02', '2026-04-22 05:59:12');
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

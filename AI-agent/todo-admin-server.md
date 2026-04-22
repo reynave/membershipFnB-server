@@ -41,6 +41,11 @@ File ini hanya untuk endpoint dan logic backend admin:
 | ✅ | S-013 | POS Auth by Opaque Token | `authPosV1` validasi Bearer token via DB lookup `users_token` | AI | High | S-011 | Bukan JWT lagi |
 | ✅ | S-014 | Merchant Binding Fix | Ikat transaksi POS ke `merchantId` dari token yang dipakai | AI | High | S-013 | Cegah merchant mismatch |
 | ✅ | S-015 | POS Integration Doc | Dokumen sample endpoint POS untuk tim eksternal | AI | Medium | S-013 | `server/POS-INTEGRATION.md` |
+| ✅ | S-017 | Admin Vouchers CRUD | API admin voucher header: list, detail, create, update, soft delete (`presence=0`) | AI | High | - | Route `/api/admin/vouchers` aktif |
+| ✅ | S-018 | Admin Voucher Merchant Scope | API admin untuk simpan/ubah relasi merchant per voucher di `voucher_merchant`; kosong = global | AI | High | S-017 | PUT `/api/admin/vouchers/:id/merchants` |
+| ✅ | S-019 | Member Detail Voucher History API | Perluas GET `/api/admin/members/:id` agar include list redeem voucher dari `members_voucher` | AI | Medium | S-003, S-017 | Field response: `voucherHistory` |
+| ✅ | S-020 | Admin Promos CRUD | API admin promo header: list, detail, create, update, soft delete (`presence=0`) | AI | High | - | Route `/api/admin/promos` aktif |
+| ✅ | S-021 | Admin Promo Merchant Scope | API admin untuk simpan/ubah relasi merchant per promo di `promo_merchant`; kosong = global | AI | High | S-020 | PUT `/api/admin/promos/:id/merchants` |
 | ⬜ | S-016 | Admin API Test Collection | Siapkan collection test regresi `/api/admin/*` | PAIR | Medium | S-002..S-012 | Next hardening |
 
 ---
@@ -54,3 +59,8 @@ File ini hanya untuk endpoint dan logic backend admin:
 | 2026-04-21 | S-011..S-012 | Implement create/delete opaque POS token dari admin | AI |
 | 2026-04-21 | S-013..S-014 | Rewrite auth POS V1 ke DB token lookup + merchant binding fix | AI |
 | 2026-04-21 | S-015 | Tambah dokumentasi integrasi POS untuk external team | AI |
+| 2026-04-22 | S-017..S-019 | Tambah planning API admin modul Voucher + relasi merchant + history voucher di member detail | AI |
+| 2026-04-22 | S-017..S-019 | Implementasi API admin Voucher selesai + server boot sukses | AI |
+| 2026-04-22 | S-020..S-021 | Tambah planning API admin modul Promo + relasi merchant | AI |
+| 2026-04-22 | S-020..S-021 | Implementasi API admin Promo selesai + smoke test CRUD/scope sukses | AI |
+| 2026-04-22 | QA Visual | Validasi report filter, error handling, datepicker, build fix Angular sukses (frontend) | AI |

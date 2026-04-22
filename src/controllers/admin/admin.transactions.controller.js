@@ -2,13 +2,29 @@ const { query } = require('../../config/db');
 const { success } = require('../../helpers/response');
 
 const DEFAULT_PAGE_SIZE = 20;
+const DATE_LITERAL = /^\d{4}-\d{2}-\d{2}$/;
 
 const list = async (req, res, next) => {
   try {
     const page     = Math.max(1, parseInt(req.query.page)     || 1);
     const pageSize = Math.min(100, parseInt(req.query.pageSize) || DEFAULT_PAGE_SIZE);
     const type     = req.query.type; // 'point_in' | 'redeem' | undefined
+    const search   = req.query.search ? `%${req.query.search}%` : null;
+    const inputDateFrom = req.query.inputDateFrom ? String(req.query.inputDateFrom) : '';
+    const inputDateTo   = req.query.inputDateTo   ? String(req.query.inputDateTo)   : '';
     const offset   = (page - 1) * pageSize;
+
+    if (inputDateFrom && !DATE_LITERAL.test(inputDateFrom)) {
+      const err = new Error('inputDateFrom must be in YYYY-MM-DD format');
+      err.statusCode = 422;
+      return next(err);
+    }
+
+    if (inputDateTo && !DATE_LITERAL.test(inputDateTo)) {
+      const err = new Error('inputDateTo must be in YYYY-MM-DD format');
+      err.statusCode = 422;
+      return next(err);
+    }
 
     let whereClauses = ['p.presence = 1'];
     const params = [];
@@ -19,10 +35,30 @@ const list = async (req, res, next) => {
       whereClauses.push('p.pointOut > 0');
     }
 
+    if (search) {
+      whereClauses.push('(t.bill LIKE ? OR p.note LIKE ? OR m.name LIKE ? OR mc.name LIKE ?)');
+      params.push(search, search, search, search);
+    }
+
+    if (inputDateFrom) {
+      whereClauses.push('DATE(p.inputDate) >= ?');
+      params.push(inputDateFrom);
+    }
+
+    if (inputDateTo) {
+      whereClauses.push('DATE(p.inputDate) <= ?');
+      params.push(inputDateTo);
+    }
+
     const where = whereClauses.join(' AND ');
 
     const countRows = await query(
-      `SELECT COUNT(*) AS total FROM points p WHERE ${where}`,
+      `SELECT COUNT(*) AS total
+       FROM points p
+       LEFT JOIN transaction t  ON p.transactionId = t.id
+       LEFT JOIN members     m  ON p.memberId      = m.id
+       LEFT JOIN merchant    mc ON p.merchantId    = mc.id
+       WHERE ${where}`,
       params
     );
     const total = countRows[0].total;

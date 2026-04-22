@@ -32,7 +32,7 @@ const list = async (req, res, next) => {
     const total = countRows[0].total;
 
     const rows = await query(
-      `SELECT m.id, m.name, m.email, m.phone, m.tierId, m.status, m.activated,
+      `SELECT m.id, m.name, m.email, m.phone, m.birthdate, m.tierId, m.status, m.activated,
               m.verified, m.inputDate, m.updateDate,
               COALESCE(t.name, '') AS tierName
        FROM members m
@@ -54,7 +54,7 @@ const detail = async (req, res, next) => {
     const id = parseInt(req.params.id);
 
     const members = await query(
-      `SELECT m.id, m.name, m.email, m.phone, m.tierId, m.status, m.activated,
+      `SELECT m.id, m.name, m.email, m.phone, m.birthdate, m.tierId, m.status, m.activated,
               m.verified, m.inputDate, m.updateDate,
               COALESCE(t.name, '') AS tierName
        FROM members m
@@ -95,10 +95,28 @@ const detail = async (req, res, next) => {
       [id]
     );
 
+    const voucherHistory = await query(
+      `SELECT mv.id, mv.voucherId, mv.barcode, mv.amount, mv.expiredDate,
+              mv.used, mv.usedDate, mv.usedMarchantId,
+              mv.inputDate, mv.updateDate,
+              COALESCE(v.name, '-') AS voucherName,
+              COALESCE(v.pointsRequired, 0) AS pointsRequired,
+              COALESCE(v.pointsAmount, 0) AS pointsAmount,
+              COALESCE(usedMerchant.name, '-') AS usedMerchantName
+       FROM members_voucher mv
+       LEFT JOIN voucher v ON mv.voucherId = v.id
+       LEFT JOIN merchant usedMerchant ON mv.usedMarchantId = usedMerchant.id
+       WHERE mv.memberId = ? AND mv.presence = 1
+       ORDER BY mv.id DESC
+       LIMIT 50`,
+      [id]
+    );
+
     return success(res, {
       member:  members[0],
       balance: balanceRows[0],
-      history
+      history,
+      voucherHistory
     }, 'Member detail fetched');
   } catch (err) {
     return next(err);
