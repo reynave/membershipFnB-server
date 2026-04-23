@@ -44,6 +44,10 @@ const validatePromoPayload = (payload, { requireAll = true } = {}) => {
   const description = toNullableString(payload?.description);
   const startDate = toNullableString(payload?.startDate);
   const endDate = toNullableString(payload?.endDate);
+  // birthday fields
+  const birthdayMember = Number(payload?.birthdayMember) === 1 ? 1 : 0;
+  const birthdayAfter = Number(payload?.birthdayAfter) || 0;
+  const birthdayBefore = Number(payload?.birthdayBefore) || 0;
 
   if (requireAll && !name) {
     return { error: 'name is required' };
@@ -55,7 +59,10 @@ const validatePromoPayload = (payload, { requireAll = true } = {}) => {
       img,
       description,
       startDate,
-      endDate
+      endDate,
+      birthdayMember,
+      birthdayAfter,
+      birthdayBefore
     }
   };
 };
@@ -215,10 +222,11 @@ const create = async (req, res, next) => {
 
     const payload = validation.data;
 
+
     const result = await query(
-      `INSERT INTO promo (name, img, description, startDate, endDate)
-       VALUES (?, ?, ?, ?, ?)`,
-      [payload.name, payload.img, payload.description, payload.startDate, payload.endDate]
+      `INSERT INTO promo (name, img, description, startDate, endDate, birthdayMember, birthdayAfter, birthdayBefore)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [payload.name, payload.img, payload.description, payload.startDate, payload.endDate, payload.birthdayMember, payload.birthdayAfter, payload.birthdayBefore]
     );
 
     const created = await getPromoById(Number(result.insertId || 0));
@@ -263,9 +271,12 @@ const update = async (req, res, next) => {
            img = ?,
            description = ?,
            startDate = ?,
-           endDate = ?
+           endDate = ?,
+           birthdayMember = ?,
+           birthdayAfter = ?,
+           birthdayBefore = ?
        WHERE id = ? AND presence = 1`,
-      [payload.name, payload.img, payload.description, payload.startDate, payload.endDate, id]
+      [payload.name, payload.img, payload.description, payload.startDate, payload.endDate, payload.birthdayMember, payload.birthdayAfter, payload.birthdayBefore, id]
     );
 
     const updated = await getPromoById(id);

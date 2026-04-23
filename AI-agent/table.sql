@@ -170,19 +170,22 @@ CREATE TABLE IF NOT EXISTS `promo` (
   `name` varchar(100) NOT NULL,
   `img` varchar(250) NOT NULL,
   `description` mediumtext DEFAULT NULL,
-  `promoType` varchar(50) DEFAULT NULL,
+  `birthdayMember` tinyint(4) NOT NULL DEFAULT 0,
+  `birthdayAfter` tinyint(4) NOT NULL DEFAULT 7,
+  `birthdayBefore` tinyint(4) NOT NULL DEFAULT 7,
   `startDate` date DEFAULT NULL,
   `endDate` date DEFAULT NULL,
   `presence` tinyint(1) DEFAULT 1,
   `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
   `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table membership.promo: ~2 rows (approximately)
-INSERT INTO `promo` (`id`, `name`, `img`, `description`, `promoType`, `startDate`, `endDate`, `presence`, `inputDate`, `updateDate`) VALUES
-	(1, 'QA Promo API Updated', '', 'Updated promo API smoke test', 'hero', '2026-04-22', '2026-12-31', 0, '2026-04-22 06:27:41', '2026-04-22 06:27:41'),
-	(2, 'Kartini', 'http://localhost:3200/public/upload/1776840518054-1.jpg', 'A highly configurable component that helps you with selecting calendar dates.\nNgbDatepicker is meant to be displayed inline on a page or put inside a popup.', 'Promo Type', '2026-04-14', '2026-04-29', 1, '2026-04-22 06:29:15', '2026-04-22 06:48:43');
+-- Dumping data for table membership.promo: ~3 rows (approximately)
+INSERT INTO `promo` (`id`, `name`, `img`, `description`, `birthdayMember`, `birthdayAfter`, `birthdayBefore`, `startDate`, `endDate`, `presence`, `inputDate`, `updateDate`) VALUES
+	(1, 'QA Promo API Updated', '', 'Updated promo API smoke test', 0, 0, 0, '2026-04-22', '2026-12-31', 0, '2026-04-22 06:27:41', '2026-04-22 06:27:41'),
+	(2, 'Kartini', 'http://localhost:3200/public/upload/1776840518054-1.jpg', 'A highly configurable component that helps you with selecting calendar dates.\nNgbDatepicker is meant to be displayed inline on a page or put inside a popup.', 0, 0, 0, '2026-04-14', '2026-04-29', 1, '2026-04-22 06:29:15', '2026-04-22 06:48:43'),
+	(3, 'Promo Ulang Tahun Hub BCA 69', 'https://pustaka.bca.co.id/Promo/3793FC69-922F-4FF6-91FE-44D1D6D0C8F4/BannerHomepage/id/20260219_banner-hut-bca.jpeg?v=23042026160415', 'Harga Spesial Rp69 Ribu\n\nSyarat & Ketentuan:\n\n- Harga spesial Rp69 ribu untuk paket Bakmi GM, Nasi Ayam Lada Cha Cha, dan 2 Es Teh Manis\n- Berlaku untuk 1x transaksi/nasabah/hari\n- Berlaku untuk pembayaran dengan QRIS di myBCA\n- Berlaku dine in dan takeaway di seluruh outlet Bakmi GM (kecuali stasiun & bandara)', 0, 0, 0, '2026-03-31', '2029-04-28', 1, '2026-04-23 09:04:49', '2026-04-23 09:05:31');
 
 -- Dumping structure for table membership.promo_merchant
 CREATE TABLE IF NOT EXISTS `promo_merchant` (
@@ -299,8 +302,8 @@ CREATE TABLE IF NOT EXISTS `users` (
 -- Dumping data for table membership.users: ~3 rows (approximately)
 INSERT INTO `users` (`id`, `name`, `email`, `password_hash`, `note`, `isLock`, `invisibleUser`, `presence`, `inputDate`, `updateDate`) VALUES
 	(1, 'admin', 'admin@admin.com', '$2b$10$Vn6IhUeIs6m2RwJKw4oZqO8DdDSvrG3BuzszhDHTvPwRnR0n.Wt3q', 'pass : admin123', 1, 0, 1, '2026-04-16 07:59:39', '2026-04-22 07:24:35'),
-	(2, 'QA Staff Updated', 'qa.staff.1776843327@mail.com', '$2b$04$3DIBJiXqzDIddIALcfV5AelLJi.LHnkAm8waLPKcpp9A8Dx6POwkC', 'qa updated', 0, 0, 0, '2026-04-22 07:35:27', '2026-04-22 07:35:27'),
-	(3, 'Staff Delete Guard', 'staff.1776843363770@mail.com', '$2b$04$60mnwA1FnA7zbC7bw5Vx0.DZElM3oNpX6m9zf.FjwTtLhHT7OgRcq', 'staff', 0, 0, 0, '2026-04-22 07:36:03', '2026-04-22 07:36:03');
+	(2, 'QA Staff Updated', 'qa.staff.1776843327@mail.com', '$2b$04$3DIBJiXqzDIddIALcfV5AelLJi.LHnkAm8waLPKcpp9A8Dx6POwkC', 'qa updated', 0, 0, 1, '2026-04-22 07:35:27', '2026-04-22 07:57:38'),
+	(3, 'Staff Delete Guard', 'staff.1776843363770@mail.com', '$2b$04$60mnwA1FnA7zbC7bw5Vx0.DZElM3oNpX6m9zf.FjwTtLhHT7OgRcq', 'staff', 0, 1, 1, '2026-04-22 07:36:03', '2026-04-22 07:58:07');
 
 -- Dumping structure for table membership.users_token
 CREATE TABLE IF NOT EXISTS `users_token` (
