@@ -94,6 +94,7 @@ const getPromoById = async (id) => {
   const rows = await query(
     `SELECT p.id, p.name, p.img,  
             p.startDate, p.endDate, p.presence, p.inputDate, p.updateDate,
+              p.description, p.birthdayMember, p.birthdayAfter, p.birthdayBefore,
             COUNT(pm.id) AS merchantCount
      FROM promo p
      LEFT JOIN promo_merchant pm ON pm.promoId = p.id AND pm.presence = 1
@@ -188,7 +189,7 @@ const detail = async (req, res, next) => {
 
     const selectedMerchants = await query(
       `SELECT pm.id, pm.promoId, pm.marchantId AS merchantId,
-              COALESCE(m.name, '-') AS merchantName,
+              COALESCE(m.name, '-') AS merchantName, 
               pm.inputDate, pm.updateDate
        FROM promo_merchant pm
        LEFT JOIN merchant m ON m.id = pm.marchantId
@@ -264,7 +265,7 @@ const update = async (req, res, next) => {
     }
 
     const payload = validation.data;
-
+    console.log(payload)
     await query(
       `UPDATE promo
        SET name = ?,
