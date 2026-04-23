@@ -85,7 +85,7 @@ const ensurePromoMerchantSchema = async () => {
 
 const getPromoById = async (id) => {
   const rows = await query(
-    `SELECT p.id, p.name, p.img, p.description,
+    `SELECT p.id, p.name, p.img,  
             p.startDate, p.endDate, p.presence, p.inputDate, p.updateDate,
             COUNT(pm.id) AS merchantCount
      FROM promo p
