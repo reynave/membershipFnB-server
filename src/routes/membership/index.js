@@ -4,6 +4,9 @@ const authRoutes = require('./auth.routes');
 const pointRoutes = require('./point.routes');
 const redeemRoutes = require('./redeem.routes');
 const promoRoutes = require('./promos.routes');
+const voucherRoutes = require('./vouchers.routes');
+const voucherRedeemRoutes = require('./voucher-redeem.routes');
+const membersVoucherRoutes = require('./members-voucher.routes');
 
 const router = express.Router();
 
@@ -21,6 +24,15 @@ router.use('/redeem', redeemRoutes);
 
 // --- Promos ---
 router.use('/promos', promoRoutes);
+
+// --- Vouchers ---
+router.use('/vouchers', voucherRoutes);
+
+// --- Voucher redeem ---
+router.use('/voucher-redeem', voucherRedeemRoutes);
+
+// --- Members voucher (my vouchers) ---
+router.use('/members-voucher', membersVoucherRoutes);
 
 
 
