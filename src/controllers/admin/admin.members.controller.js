@@ -39,8 +39,8 @@ const list = async (req, res, next) => {
        LEFT JOIN tier t ON m.tierId = t.id
        WHERE ${where}
        ORDER BY m.id DESC
-       LIMIT ? OFFSET ?`,
-      [...params, pageSize, offset]
+       LIMIT ${Number(pageSize)} OFFSET ${Number(offset)}`,
+      params
     );
 
     return success(res, { total, page, pageSize, rows }, 'Members fetched');

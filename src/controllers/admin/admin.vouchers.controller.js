@@ -157,8 +157,8 @@ const list = async (req, res, next) => {
        WHERE ${where}
        GROUP BY v.id
        ORDER BY v.id DESC
-       LIMIT ? OFFSET ?`,
-      [...params, pageSize, offset]
+       LIMIT ${Number(pageSize)} OFFSET ${Number(offset)}`,
+      params
     );
 
     const normalizedRows = rows.map((row) => ({

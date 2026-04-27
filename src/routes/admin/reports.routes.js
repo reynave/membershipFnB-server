@@ -102,8 +102,8 @@ const buildMembersReport = async (req, format) => {
      LEFT JOIN tier t ON m.tierId = t.id
      WHERE ${where}
      ORDER BY m.id DESC
-     LIMIT ? OFFSET ?`,
-    [...params, limit, offset]
+     LIMIT ${Number(limit)} OFFSET ${Number(offset)}`,
+    params
   );
 
   return {

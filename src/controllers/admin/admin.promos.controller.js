@@ -142,8 +142,8 @@ const list = async (req, res, next) => {
        WHERE ${where}
        GROUP BY p.id
        ORDER BY p.id DESC
-       LIMIT ? OFFSET ?`,
-      [...params, pageSize, offset]
+       LIMIT ${Number(pageSize)} OFFSET ${Number(offset)}`,
+      params
     );
 
     return success(res, {

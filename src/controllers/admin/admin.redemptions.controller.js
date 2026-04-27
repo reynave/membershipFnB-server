@@ -62,8 +62,8 @@ const list = async (req, res, next) => {
        LEFT JOIN merchant mc ON t.merchantId = mc.id
        WHERE ${where}
        ORDER BY t.id DESC
-       LIMIT ? OFFSET ?`,
-      [...params, pageSize, offset]
+       LIMIT ${Number(pageSize)} OFFSET ${Number(offset)}`,
+      params
     );
 
     return success(res, { total, page, pageSize, rows }, 'Redemptions fetched');

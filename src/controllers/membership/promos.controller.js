@@ -54,8 +54,8 @@ const list = async (req, res, next) => {
        FROM promo p
        WHERE ${where}
        ORDER BY p.id DESC
-       LIMIT ? OFFSET ?`,
-      [...params, pageSize, offset]
+       LIMIT ${Number(pageSize)} OFFSET ${Number(offset)}`,
+      params
     );
 
     return success(res, {

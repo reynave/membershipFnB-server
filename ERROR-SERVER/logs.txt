@@ -1,0 +1,25 @@
+Error: Incorrect arguments to mysqld_stmt_execute
+    at query (/node-app/membership-server/src/config/db.js:53:35)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async list (/node-app/membership-server/src/controllers/admin/admin.transactions.controller.js:66:18) {
+  code: 'ER_WRONG_ARGUMENTS',
+  errno: 1210,
+  sqlState: 'HY000',
+  sqlMessage: 'Incorrect arguments to mysqld_stmt_execute',
+  sql: 'SELECT p.id, p.transactionId, p.memberId, p.merchantId, p.tierId,\n' +
+    '              p.pointIn, p.pointOut, p.transactionDate, p.note, p.archived,\n' +
+    "              COALESCE(t.bill, '')        AS bill,\n" +
+    '              COALESCE(t.totalAmount, 0) AS totalAmount,\n' +
+    "              COALESCE(m.name,  '-')     AS memberName,\n" +
+    "              COALESCE(mc.name, '-')     AS merchantName,\n" +
+    "              COALESCE(tr.name, '')      AS tierName\n" +
+    '       FROM points p\n' +
+    '       LEFT JOIN transaction t  ON p.transactionId = t.id\n' +
+    '       LEFT JOIN members     m  ON p.memberId      = m.id\n' +
+    '       LEFT JOIN merchant    mc ON p.merchantId    = mc.id\n' +
+    '       LEFT JOIN tier        tr ON p.tierId        = tr.id\n' +
+    '       WHERE p.presence = 1\n' +
+    '       ORDER BY p.id DESC\n' +
+    '       LIMIT ? OFFSET ?'
+}
+[0mGET /api/admin/transactions?page=1&pageSize=10 [31m500[0m 34.771 ms - 72[0m
