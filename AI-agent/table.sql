@@ -72,6 +72,19 @@ INSERT INTO `members_code` (`id`, `memberId`, `redeemCode`, `expDateTime`, `pres
 	(14, 999999, 'AUTO-RDM-MISS-001', '2027-12-31 23:59:59', 1, '2026-04-20 09:31:04', '2026-04-20 09:31:04'),
 	(15, 999999, 'AUTO-RDM-MISS-002', '2027-12-31 23:59:59', 1, '2026-04-20 09:37:24', '2026-04-20 09:37:24');
 
+-- Dumping structure for table membership.members_logs
+CREATE TABLE IF NOT EXISTS `members_logs` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `userId` int(11) NOT NULL DEFAULT 0,
+  `note` varchar(250) NOT NULL DEFAULT '',
+  `success` tinyint(4) NOT NULL DEFAULT 0,
+  `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table membership.members_logs: ~0 rows (approximately)
+
 -- Dumping structure for table membership.members_voucher
 CREATE TABLE IF NOT EXISTS `members_voucher` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -87,9 +100,11 @@ CREATE TABLE IF NOT EXISTS `members_voucher` (
   `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
   `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table membership.members_voucher: ~0 rows (approximately)
+INSERT INTO `members_voucher` (`id`, `voucherId`, `memberId`, `barcode`, `amount`, `expiredDate`, `used`, `usedDate`, `usedMarchantId`, `presence`, `inputDate`, `updateDate`) VALUES
+	(1, 4, 1, 'V-4-M-1-mocwapwh', 10000, '2026-06-03', 0, '2000-01-01 00:00:00', 0, 1, '2026-04-24 12:37:08', '2026-04-24 12:37:08');
 
 -- Dumping structure for table membership.merchant
 CREATE TABLE IF NOT EXISTS `merchant` (
@@ -185,7 +200,7 @@ CREATE TABLE IF NOT EXISTS `promo` (
 INSERT INTO `promo` (`id`, `name`, `img`, `description`, `birthdayMember`, `birthdayAfter`, `birthdayBefore`, `startDate`, `endDate`, `presence`, `inputDate`, `updateDate`) VALUES
 	(1, 'QA Promo API Updated', '', 'Updated promo API smoke test', 0, 0, 0, '2026-04-22', '2026-12-31', 0, '2026-04-22 06:27:41', '2026-04-22 06:27:41'),
 	(2, 'Kartini', 'http://localhost:3200/public/upload/1776840518054-1.jpg', 'A highly configurable component that helps you with selecting calendar dates.\nNgbDatepicker is meant to be displayed inline on a page or put inside a popup.', 0, 0, 0, '2026-04-14', '2026-04-29', 1, '2026-04-22 06:29:15', '2026-04-22 06:48:43'),
-	(3, 'Promo Ulang Tahun Hub BCA 69', 'https://pustaka.bca.co.id/Promo/3793FC69-922F-4FF6-91FE-44D1D6D0C8F4/BannerHomepage/id/20260219_banner-hut-bca.jpeg?v=23042026160415', 'Harga Spesial Rp69 Ribu\n\nSyarat & Ketentuan:\n\n- Harga spesial Rp69 ribu untuk paket Bakmi GM, Nasi Ayam Lada Cha Cha, dan 2 Es Teh Manis\n- Berlaku untuk 1x transaksi/nasabah/hari\n- Berlaku untuk pembayaran dengan QRIS di myBCA\n- Berlaku dine in dan takeaway di seluruh outlet Bakmi GM (kecuali stasiun & bandara)', 0, 0, 0, '2026-03-31', '2029-04-28', 1, '2026-04-23 09:04:49', '2026-04-23 09:05:31');
+	(3, 'Promo Ulang Tahun Hub BCA 69 123', 'https://pustaka.bca.co.id/Promo/3793FC69-922F-4FF6-91FE-44D1D6D0C8F4/BannerHomepage/id/20260219_banner-hut-bca.jpeg?v=23042026160415', 'Coba gunakan dulu model standar (GPT-4.1) untuk tugas-tugas coding yang sifatnya repetitif atau UI (seperti merapikan Tailwind). Jika Anda harus menangani logika database atau perhitungan pajak yang rumit dan merasa AI-nya jadi "kurang nyambung", barulah pertimbangkan untuk menambah budget di menu yang tadi.', 1, 5, 5, '2026-03-20', '2029-04-18', 1, '2026-04-23 09:04:49', '2026-04-23 10:32:07');
 
 -- Dumping structure for table membership.promo_merchant
 CREATE TABLE IF NOT EXISTS `promo_merchant` (
@@ -196,7 +211,7 @@ CREATE TABLE IF NOT EXISTS `promo_merchant` (
   `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
   `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table membership.promo_merchant: ~5 rows (approximately)
 INSERT INTO `promo_merchant` (`id`, `promoId`, `marchantId`, `presence`, `inputDate`, `updateDate`) VALUES
@@ -204,7 +219,8 @@ INSERT INTO `promo_merchant` (`id`, `promoId`, `marchantId`, `presence`, `inputD
 	(2, 1, 2, 0, '2026-04-22 06:27:41', '2026-04-22 06:27:41'),
 	(3, 2, 1, 1, '2026-04-22 06:29:24', '2026-04-22 06:29:24'),
 	(4, 2, 2, 1, '2026-04-22 06:29:24', '2026-04-22 06:29:24'),
-	(5, 2, 3, 1, '2026-04-22 06:29:24', '2026-04-22 06:29:24');
+	(5, 2, 3, 1, '2026-04-22 06:29:24', '2026-04-22 06:29:24'),
+	(6, 3, 1, 0, '2026-04-23 10:21:01', '2026-04-23 10:21:06');
 
 -- Dumping structure for table membership.tier
 CREATE TABLE IF NOT EXISTS `tier` (
@@ -304,6 +320,23 @@ INSERT INTO `users` (`id`, `name`, `email`, `password_hash`, `note`, `isLock`, `
 	(1, 'admin', 'admin@admin.com', '$2b$10$Vn6IhUeIs6m2RwJKw4oZqO8DdDSvrG3BuzszhDHTvPwRnR0n.Wt3q', 'pass : admin123', 1, 0, 1, '2026-04-16 07:59:39', '2026-04-22 07:24:35'),
 	(2, 'QA Staff Updated', 'qa.staff.1776843327@mail.com', '$2b$04$3DIBJiXqzDIddIALcfV5AelLJi.LHnkAm8waLPKcpp9A8Dx6POwkC', 'qa updated', 0, 0, 1, '2026-04-22 07:35:27', '2026-04-22 07:57:38'),
 	(3, 'Staff Delete Guard', 'staff.1776843363770@mail.com', '$2b$04$60mnwA1FnA7zbC7bw5Vx0.DZElM3oNpX6m9zf.FjwTtLhHT7OgRcq', 'staff', 0, 1, 1, '2026-04-22 07:36:03', '2026-04-22 07:58:07');
+
+-- Dumping structure for table membership.users_logs
+CREATE TABLE IF NOT EXISTS `users_logs` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `userId` int(11) NOT NULL DEFAULT 0,
+  `note` varchar(250) NOT NULL DEFAULT '',
+  `success` tinyint(4) NOT NULL DEFAULT 0,
+  `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table membership.users_logs: ~3 rows (approximately)
+INSERT INTO `users_logs` (`id`, `userId`, `note`, `success`, `inputDate`, `updateDate`) VALUES
+	(4, 1, 'Login failed - wrong password - email: admin@admin.com', 0, '2026-04-27 05:36:54', '2026-04-27 05:36:54'),
+	(6, 1, 'Login failed - wrong password - email: admin@admin.com', 0, '2026-04-27 05:38:08', '2026-04-27 05:38:08'),
+	(7, 1, 'Login failed - wrong password - email: admin@admin.com', 0, '2026-04-27 05:40:17', '2026-04-27 05:40:17');
 
 -- Dumping structure for table membership.users_token
 CREATE TABLE IF NOT EXISTS `users_token` (

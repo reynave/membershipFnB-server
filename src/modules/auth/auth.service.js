@@ -4,6 +4,17 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { query } = require("../../config/db");
 
+const addUserLog = async (userId, note, success = 0) => {
+  try {
+    await query(
+      "INSERT INTO users_logs (userId, note, success) VALUES (?, ?, ?)",
+      [userId || 0, note, success ? 1 : 0]
+    );
+  } catch (err) {
+    // ignore logging errors to not break auth flow
+  }
+};
+
 const toNumber = (value, fallback) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
@@ -24,9 +35,10 @@ const register = async ({ name, email, password }) => {
   const existing = await query("SELECT id FROM users WHERE email = ? LIMIT 1", [email]);
 
   if (existing.length > 0) {
-    const error = new Error("Email already registered");
-    error.statusCode = 409;
-    throw error;
+      await addUserLog(0, `Register failed - email already registered - ${email}`);
+      const error = new Error("Email already registered");
+      error.statusCode = 409;
+      throw error;
   }
 
   const passwordHash = await bcrypt.hash(password, bcryptSaltRounds);
@@ -41,6 +53,10 @@ const register = async ({ name, email, password }) => {
     [email]
   );
 
+  try {
+    await addUserLog(users[0].id, `Register success - email: ${email}`, 1);
+  } catch (e) {}
+
   return sanitizeUser(users[0]);
 };
 
@@ -51,18 +67,19 @@ const login = async ({ email, password }) => {
   );
 
   if (users.length === 0) {
-    const error = new Error("Invalid email or password");
-    error.statusCode = 401;
-    throw error;
+      const error = new Error("Invalid email or password");
+      error.statusCode = 401;
+      throw error;
   }
 
   const user = users[0];
   const passwordMatched = await bcrypt.compare(password, user.password_hash);
 
   if (!passwordMatched) {
-    const error = new Error("Invalid email or password");
-    error.statusCode = 401;
-    throw error;
+      await addUserLog(user.id, `Login failed - wrong password - email: ${email}`);
+      const error = new Error("Invalid email or password");
+      error.statusCode = 401;
+      throw error;
   }
 
   const token = jwt.sign(
@@ -76,6 +93,10 @@ const login = async ({ email, password }) => {
       expiresIn: jwtExpiresIn
     }
   );
+
+  try {
+    await addUserLog(user.id, `Login success - email: ${email}`, 1);
+  } catch (e) {}
 
   return {
     token,
