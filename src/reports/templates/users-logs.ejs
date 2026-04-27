@@ -1,0 +1,34 @@
+
+  <% const formatDate = (val) => {
+       if (!val) return '';
+       const d = new Date(val);
+       const pad = (n) => String(n).padStart(2, '0');
+       return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+     };
+  %>
+  <strong><%= title %></strong>
+  <p>Generated at: <%= formatDate(meta.generatedAt) %></p>
+  <table class="table table-bordered table-sm table-hover align-middle mb-0">
+      <thead class="table-light">
+      <tr>
+        <th>ID</th>
+        <th>User ID</th>
+        <th>User Name</th>
+        <th>Note</th>
+        <th>Success</th>
+        <th>Input Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% rows.forEach(function(r){ %>
+        <tr>
+          <td ><%= r.id %></td>
+          <td><%= r.userId %></td>
+          <td><%= r.userName || '-' %></td>
+          <td><%= r.note %></td>
+          <td><%= r.success ? 'Yes' : 'No' %></td>
+          <td><%= formatDate(r.inputDate) %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>

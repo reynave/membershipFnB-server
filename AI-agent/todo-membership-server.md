@@ -62,3 +62,11 @@
   - Packages: `swagger-ui-express` dan `swagger-autogen`
   - Generate docs: `npm run swagger`
   - Setup: `swagger-config.js` + integrasi di `src/server.js`
+
+## Progress 2026-04-27
+
+- Menambahkan endpoints report untuk `members-logs` dan `users-logs` (`/api/admin/reports/*`) dengan dukungan HTML & JSON, template EJS, dan query LIMIT 30 ORDER BY `inputDate` DESC.
+- Menambahkan pencatatan login sukses ke tabel `members_logs` dan memverifikasi insert menggunakan akun `cso1@email.com`.
+- Memperbarui tampilan frontend (user) untuk mengambil nama dari `localStorage` (`membership_member`) dan menambahkan getter di komponen serta verifikasi dev server lokal.
+- Menambahkan format tanggal pada report menjadi `YYYY-MM-DD HH:MM:SS` di template EJS.
+- Menjalankan dan memverifikasi report HTML, lalu membersihkan skrip sementara yang dibuat untuk pemeriksaan.

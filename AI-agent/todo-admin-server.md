@@ -64,3 +64,4 @@ File ini hanya untuk endpoint dan logic backend admin:
 | 2026-04-22 | S-020..S-021 | Tambah planning API admin modul Promo + relasi merchant | AI |
 | 2026-04-22 | S-020..S-021 | Implementasi API admin Promo selesai + smoke test CRUD/scope sukses | AI |
 | 2026-04-22 | QA Visual | Validasi report filter, error handling, datepicker, build fix Angular sukses (frontend) | AI |
+| 2026-04-27 | S-022 | Reports & Logs | Tambah endpoints report `members-logs` & `users-logs`, template EJS, tambahkan kolom `userName` pada template, verifikasi HTML output, dan tambah logging login sukses ke `members_logs`. | AI |

@@ -194,6 +194,58 @@ const buildTransactionsDailyReport = async (req, format) => {
   };
 };
 
+const buildMembersLogsReport = async (_req, _format) => {
+  const rows = await query(
+    `SELECT m.id, m.userId, m.note, m.success, m.inputDate, u.name as userName
+    FROM members_logs as m
+    join members as u on m.userId = u.id
+    ORDER BY m.inputDate DESC LIMIT 30`
+  );
+
+  return {
+    meta: {
+      reportKey: 'members-logs',
+      generatedAt: new Date().toISOString(),
+      total: rows.length
+    },
+    filters: {},
+    rows: rows.map(r => ({
+      id: r.id,
+      userId: r.userId,
+      userName: r.userName,
+      note: r.note,
+      success: Number(r.success) === 1,
+      inputDate: r.inputDate
+    }))
+  };
+};
+
+const buildUsersLogsReport = async (_req, _format) => {
+  const rows = await query(
+    `SELECT u.id, u.userId, u.note, u.success, u.inputDate, m.name as userName
+    FROM users_logs as u
+    join members as m on u.userId = m.id
+    ORDER BY u.inputDate DESC LIMIT 30`
+  );
+
+  return {
+    meta: {
+      reportKey: 'users-logs',
+      generatedAt: new Date().toISOString(),
+      total: rows.length
+    },
+    filters: {},
+    rows: rows.map(r => ({
+      id: r.id,
+      userId: r.userId,
+      userName: r.userName,
+      note: r.note,
+      success: Number(r.success) === 1,
+      inputDate: r.inputDate
+    }))
+  };
+};
+
 const reportsRegistry = {
   members: {
     key: 'members',
@@ -209,6 +261,23 @@ const reportsRegistry = {
     supports: ['html', 'json'],
     build: buildTransactionsDailyReport
   }
+};
+
+// Add simple logs reports (no paging, limit 30, ordered by inputDate DESC)
+reportsRegistry['members-logs'] = {
+  key: 'members-logs',
+  label: 'Members Logs',
+  templateFile: 'members-logs.ejs',
+  supports: ['html', 'json'],
+  build: buildMembersLogsReport
+};
+
+reportsRegistry['users-logs'] = {
+  key: 'users-logs',
+  label: 'Users Logs',
+  templateFile: 'users-logs.ejs',
+  supports: ['html', 'json'],
+  build: buildUsersLogsReport
 };
 
 const renderTemplate = async (templateFile, viewModel) => {
