@@ -2,6 +2,12 @@
 
 Backend untuk aplikasi membership berbasis **Node.js + Express** dengan **MySQL**, autentikasi **JWT**, enkripsi password **bcryptjs**, konfigurasi environment via **dotenv**, realtime update via **Socket.IO**, dan pembuatan **report HTML menggunakan Handlebars**.
 
+## Testing link 
+- ADMIN : https://reynave.github.io/membershipFnB-admin-ng18/dist/browser/
+- Membership (mobile) : https://reynave.github.io/membershipFnB-ng18/dist/browser/
+- API (check) : https://membership.mitralinksolusi.com/api/health
+
+
 ## Tech Stack
 
 - Node.js **v24.x (LTS)**
