@@ -4,6 +4,7 @@ const authRoutes = require('./auth.routes');
 const pointRoutes = require('./point.routes');
 const redeemRoutes = require('./redeem.routes');
 const promoRoutes = require('./promos.routes');
+const tierRoutes = require('./tiers.routes');
 const voucherRoutes = require('./vouchers.routes');
 const voucherRedeemRoutes = require('./voucher-redeem.routes');
 const membersVoucherRoutes = require('./members-voucher.routes');
@@ -24,6 +25,9 @@ router.use('/redeem', redeemRoutes);
 
 // --- Promos ---
 router.use('/promos', promoRoutes);
+
+// --- Tiers ---
+router.use('/tiers', tierRoutes);
 
 // --- Vouchers ---
 router.use('/vouchers', voucherRoutes);

@@ -81,9 +81,16 @@ CREATE TABLE IF NOT EXISTS `members_logs` (
   `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
   `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table membership.members_logs: ~0 rows (approximately)
+-- Dumping data for table membership.members_logs: ~6 rows (approximately)
+INSERT INTO `members_logs` (`id`, `userId`, `note`, `success`, `inputDate`, `updateDate`) VALUES
+	(4, 1, 'Login success - email: cso1@email.com', 1, '2026-04-27 06:08:05', '2026-04-27 06:08:05'),
+	(5, 1, 'Login success - email: cso1@email.com', 1, '2026-04-27 06:10:00', '2026-04-27 06:10:00'),
+	(6, 1, 'Login failed - wrong password - email: cso1@email.com', 0, '2026-04-27 06:10:08', '2026-04-27 06:10:08'),
+	(7, 1, 'Login success - email: cso1@email.com', 1, '2026-04-27 08:21:18', '2026-04-27 08:21:18'),
+	(8, 1, 'Login success - email: cso1@email.com', 1, '2026-05-04 06:06:53', '2026-05-04 06:06:53'),
+	(9, 1, 'Login success - email: cso1@email.com', 1, '2026-05-04 06:16:23', '2026-05-04 06:16:23');
 
 -- Dumping structure for table membership.members_voucher
 CREATE TABLE IF NOT EXISTS `members_voucher` (
@@ -100,11 +107,21 @@ CREATE TABLE IF NOT EXISTS `members_voucher` (
   `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
   `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table membership.members_voucher: ~0 rows (approximately)
+-- Dumping data for table membership.members_voucher: ~9 rows (approximately)
 INSERT INTO `members_voucher` (`id`, `voucherId`, `memberId`, `barcode`, `amount`, `expiredDate`, `used`, `usedDate`, `usedMarchantId`, `presence`, `inputDate`, `updateDate`) VALUES
-	(1, 4, 1, 'V-4-M-1-mocwapwh', 10000, '2026-06-03', 0, '2000-01-01 00:00:00', 0, 1, '2026-04-24 12:37:08', '2026-04-24 12:37:08');
+	(1, 4, 1, 'V-4-M-1-mocwapwh', 10000, '2026-06-03', 0, '2000-01-01 00:00:00', 0, 1, '2026-04-24 12:37:08', '2026-04-24 12:37:08'),
+	(2, 4, 1, 'V-4-M-1-moqv386d', 10000, '2026-06-03', 1, '2026-05-02 12:52:12', 2, 1, '2026-05-04 07:12:05', '2026-05-04 07:21:13'),
+	(3, 3, 1, 'V-3-M-1-moqvljbl', 10000, '2026-12-31', 0, '2000-01-01 00:00:00', 0, 1, '2026-05-04 07:26:19', '2026-05-04 07:26:19'),
+	(4, 2, 1, 'V-2-M-1-moqvqzsb', 60000, '2026-12-31', 0, '2000-01-01 00:00:00', 0, 1, '2026-05-04 07:30:34', '2026-05-04 07:30:34'),
+	(5, 4, 1, 'V-4-M-1-moqw23dw', 10000, '2026-06-03', 0, '2000-01-01 00:00:00', 0, 1, '2026-05-04 07:39:12', '2026-05-04 07:39:12'),
+	(6, 4, 1, 'V-4-M-1-moqw2jvl', 10000, '2026-06-03', 0, '2000-01-01 00:00:00', 0, 1, '2026-05-04 07:39:33', '2026-05-04 07:39:33'),
+	(7, 3, 1, 'V-3-M-1-moqw41xk', 10000, '2026-12-31', 0, '2000-01-01 00:00:00', 0, 1, '2026-05-04 07:40:43', '2026-05-04 07:40:43'),
+	(8, 2, 1, 'V-2-M-1-moqw49ge', 60000, '2026-12-31', 0, '2000-01-01 00:00:00', 0, 1, '2026-05-04 07:40:53', '2026-05-04 07:40:53'),
+	(9, 2, 1, 'V-2-M-1-moqw4c20', 60000, '2026-12-31', 0, '2000-01-01 00:00:00', 0, 1, '2026-05-04 07:40:56', '2026-05-04 07:40:56'),
+	(10, 2, 1, 'V-2-M-1-moqw4ead', 60000, '2026-12-31', 0, '2000-01-01 00:00:00', 0, 1, '2026-05-04 07:40:59', '2026-05-04 07:40:59'),
+	(11, 4, 1, 'V-4-M-1-moqx4so3', 10000, '2026-06-03', 0, '2000-01-01 00:00:00', 0, 1, '2026-05-04 08:09:17', '2026-05-04 08:09:17');
 
 -- Dumping structure for table membership.merchant
 CREATE TABLE IF NOT EXISTS `merchant` (
@@ -145,9 +162,9 @@ CREATE TABLE IF NOT EXISTS `points` (
   `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
   `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table membership.points: ~29 rows (approximately)
+-- Dumping data for table membership.points: ~35 rows (approximately)
 INSERT INTO `points` (`id`, `transactionId`, `memberId`, `merchantId`, `tierId`, `pointIn`, `pointOut`, `transactionDate`, `note`, `archived`, `status`, `presence`, `inputDate`, `updateDate`) VALUES
 	(5, 5, 1, 1, 1, 50000, 0, '2026-04-16 07:51:13', '', 0, 1, 1, '2026-04-16 07:51:13', '2026-04-16 07:51:44'),
 	(6, 6, 1, 1, 1, 50000, 0, '2026-04-16 07:34:32', 'POS paid transaction', 0, 1, 1, '2026-04-16 08:34:28', '2026-04-16 08:34:28'),
@@ -177,7 +194,14 @@ INSERT INTO `points` (`id`, `transactionId`, `memberId`, `merchantId`, `tierId`,
 	(41, 41, 1, 1, 1, 45000, 0, '2026-04-20 07:30:00', 'POSTMAN test 1', 0, 1, 1, '2026-04-20 10:49:10', '2026-04-20 10:49:10'),
 	(42, 42, 1, 1, 1, 45000, 0, '2026-04-20 07:30:00', 'POSTMAN test 1', 0, 1, 1, '2026-04-20 10:49:13', '2026-04-20 10:49:13'),
 	(43, 0, 1, 1, 1, 0, 52500, '2026-04-20 03:49:20', 'Redeem POS V1 - TRX-2026-00129', 0, 1, 1, '2026-04-20 10:49:20', '2026-04-20 10:49:20'),
-	(44, 0, 1, 1, 1, 0, 9000, '2026-04-20 03:58:58', 'Redeem POS V1 - TRX-2026-00129', 0, 1, 1, '2026-04-20 10:58:58', '2026-04-20 10:58:58');
+	(44, 0, 1, 1, 1, 0, 9000, '2026-04-20 03:58:58', 'Redeem POS V1 - TRX-2026-00129', 0, 1, 1, '2026-04-20 10:58:58', '2026-04-20 10:58:58'),
+	(45, 0, 1, 0, 1, 0, 10000, '2026-05-04 00:39:12', 'Voucher redeem - voucherId: 4', 0, 1, 1, '2026-05-04 07:39:12', '2026-05-04 07:39:12'),
+	(46, 0, 1, 0, 1, 0, 10000, '2026-05-04 00:39:33', 'Voucher redeem - voucherId: 4', 0, 1, 1, '2026-05-04 07:39:33', '2026-05-04 07:39:33'),
+	(47, 0, 1, 0, 1, 0, 10000, '2026-05-04 00:40:43', 'Voucher redeem - voucherId: 3', 0, 1, 1, '2026-05-04 07:40:43', '2026-05-04 07:40:43'),
+	(48, 0, 1, 0, 1, 0, 60000, '2026-05-04 00:40:53', 'Voucher redeem - voucherId: 2', 0, 1, 1, '2026-05-04 07:40:53', '2026-05-04 07:40:53'),
+	(49, 0, 1, 0, 1, 0, 60000, '2026-05-04 00:40:56', 'Voucher redeem - voucherId: 2', 0, 1, 1, '2026-05-04 07:40:56', '2026-05-04 07:40:56'),
+	(50, 0, 1, 0, 1, 0, 60000, '2026-05-04 00:40:59', 'Voucher redeem - voucherId: 2', 0, 1, 1, '2026-05-04 07:40:59', '2026-05-04 07:40:59'),
+	(51, 0, 1, 0, 1, 0, 10000, '2026-05-04 01:09:17', 'Voucher redeem - voucherId: 4', 0, 1, 1, '2026-05-04 08:09:17', '2026-05-04 08:09:17');
 
 -- Dumping structure for table membership.promo
 CREATE TABLE IF NOT EXISTS `promo` (
@@ -226,6 +250,7 @@ INSERT INTO `promo_merchant` (`id`, `promoId`, `marchantId`, `presence`, `inputD
 CREATE TABLE IF NOT EXISTS `tier` (
   `id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL DEFAULT '0',
+  `requirementTransactionOfTier` bigint(20) NOT NULL DEFAULT 0,
   `percentOfCashBack` float NOT NULL DEFAULT 0,
   `accumulationAmount` int(11) NOT NULL DEFAULT 0,
   `minAmount` bigint(20) NOT NULL DEFAULT 0,
@@ -239,11 +264,11 @@ CREATE TABLE IF NOT EXISTS `tier` (
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table membership.tier: ~4 rows (approximately)
-INSERT INTO `tier` (`id`, `name`, `percentOfCashBack`, `accumulationAmount`, `minAmount`, `maxPercentOfBill`, `expDate`, `status`, `presence`, `inputDate`, `updateDate`) VALUES
-	(1, 'blue', 10, 0, 100000, 15, '2027-01-01', 1, 1, '2026-04-16 06:20:45', '2026-04-20 09:54:45'),
-	(2, 'silver', 15, 0, 500000, 15, '2027-01-01', 1, 1, '2026-04-16 06:20:52', '2026-04-20 09:54:47'),
-	(3, 'gold', 20, 0, 1000000, 15, '2027-01-01', 1, 1, '2026-04-16 06:20:56', '2026-04-20 09:54:48'),
-	(4, 'platinum', 30, 0, 2000000, 15, '2027-01-01', 1, 1, '2026-04-16 06:20:58', '2026-04-20 09:54:48');
+INSERT INTO `tier` (`id`, `name`, `requirementTransactionOfTier`, `percentOfCashBack`, `accumulationAmount`, `minAmount`, `maxPercentOfBill`, `expDate`, `status`, `presence`, `inputDate`, `updateDate`) VALUES
+	(1, 'Blue', 0, 10, 0, 500000, 15, '2027-01-01', 1, 1, '2026-04-16 06:20:45', '2026-05-04 10:15:01'),
+	(2, 'Silver', 1000000, 15, 0, 100000, 15, '2027-01-01', 1, 1, '2026-04-16 06:20:52', '2026-05-04 10:16:39'),
+	(3, 'Gold', 5000000, 20, 0, 5000000, 15, '2027-01-01', 1, 1, '2026-04-16 06:20:56', '2026-05-04 10:16:43'),
+	(4, 'Platinum', 2000000, 30, 0, 10000000, 15, '2027-01-01', 1, 1, '2026-04-16 06:20:58', '2026-05-04 10:16:48');
 
 -- Dumping structure for table membership.transaction
 CREATE TABLE IF NOT EXISTS `transaction` (
@@ -330,13 +355,18 @@ CREATE TABLE IF NOT EXISTS `users_logs` (
   `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
   `updateDate` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table membership.users_logs: ~3 rows (approximately)
+-- Dumping data for table membership.users_logs: ~7 rows (approximately)
 INSERT INTO `users_logs` (`id`, `userId`, `note`, `success`, `inputDate`, `updateDate`) VALUES
 	(4, 1, 'Login failed - wrong password - email: admin@admin.com', 0, '2026-04-27 05:36:54', '2026-04-27 05:36:54'),
 	(6, 1, 'Login failed - wrong password - email: admin@admin.com', 0, '2026-04-27 05:38:08', '2026-04-27 05:38:08'),
-	(7, 1, 'Login failed - wrong password - email: admin@admin.com', 0, '2026-04-27 05:40:17', '2026-04-27 05:40:17');
+	(7, 1, 'Login failed - wrong password - email: admin@admin.com', 0, '2026-04-27 05:40:17', '2026-04-27 05:40:17'),
+	(8, 1, 'Login success - email: admin@admin.com', 1, '2026-04-27 05:44:47', '2026-04-27 05:44:47'),
+	(9, 1, 'Login failed - wrong password - email: admin@admin.com', 0, '2026-04-27 06:10:18', '2026-04-27 06:10:18'),
+	(10, 1, 'Login success - email: admin@admin.com', 1, '2026-04-27 06:10:20', '2026-04-27 06:10:20'),
+	(11, 1, 'Login failed - wrong password - email: admin@admin.com', 0, '2026-04-27 07:04:13', '2026-04-27 07:04:13'),
+	(12, 1, 'Login success - email: admin@admin.com', 1, '2026-04-27 07:07:20', '2026-04-27 07:07:20');
 
 -- Dumping structure for table membership.users_token
 CREATE TABLE IF NOT EXISTS `users_token` (
@@ -374,10 +404,10 @@ CREATE TABLE IF NOT EXISTS `voucher` (
 
 -- Dumping data for table membership.voucher: ~4 rows (approximately)
 INSERT INTO `voucher` (`id`, `name`, `img`, `description`, `pointsRequired`, `pointsAmount`, `startDate`, `endDate`, `quota`, `presence`, `inputDate`, `updateDate`) VALUES
-	(1, 'QA Voucher API Updated', '', 'Updated from automated API QA', 60000, 60000, '2026-04-22', '2026-12-31', 120, 0, '2026-04-22 05:42:05', '2026-04-22 05:42:06'),
-	(2, 'QA Voucher API Updated', '', 'Updated from automated API QA', 60000, 60000, '2026-04-22', '2026-12-31', 120, 1, '2026-04-22 05:42:22', '2026-04-22 05:51:52'),
-	(3, 'QA Voucher Invalid Test', '', 'negative test', 10000, 10000, '2026-04-22', '2026-12-31', 10, 1, '2026-04-22 05:42:33', '2026-04-22 05:51:51'),
-	(4, 'test', 'http://localhost:3200/public/upload/1776840629633-3.jpg', NULL, 10000, 10000, '2026-04-15', '2026-06-03', 1000, 1, '2026-04-22 05:51:22', '2026-04-22 06:50:31');
+	(1, 'QA Voucher API Updated', 'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1100&auto=format&fit=crop&', 'Updated from automated API QA', 60000, 60000, '2026-04-22', '2026-12-31', 120, 0, '2026-04-22 05:42:05', '2026-05-04 07:40:32'),
+	(2, 'QA Voucher API Updated', 'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1100&auto=format&fit=crop&', 'Updated from automated API QA', 60000, 60000, '2026-04-22', '2026-12-31', 120, 1, '2026-04-22 05:42:22', '2026-05-04 07:40:32'),
+	(3, 'QA Voucher Invalid Test', 'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1100&auto=format&fit=crop&', 'negative test', 10000, 10000, '2026-04-22', '2026-12-31', 10, 1, '2026-04-22 05:42:33', '2026-05-04 07:40:33'),
+	(4, 'Surprising Gift Service', 'http://localhost:3200/public/upload/1776840629633-3.jpg', 'Kami menggunakan kue kering untuk mengingat Anda, meningkatkan pengalaman Anda, memutar lagu di YouTube, dan menampilkan iklan yang dipersonalisasi.', 10000, 10000, '2026-04-15', '2026-06-03', 1000, 1, '2026-04-22 05:51:22', '2026-05-04 07:08:44');
 
 -- Dumping structure for table membership.voucher_merchant
 CREATE TABLE IF NOT EXISTS `voucher_merchant` (
