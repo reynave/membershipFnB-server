@@ -52,6 +52,22 @@
 		- emit `redeem:success` ke `member:${memberId}` saat redeem berhasil
 		- emit `redeem:failed` ke `member:${memberId}` saat ada error (setelah validasi code)
 
+- [x] Member bisa lihat progress tier berdasarkan total transaksi
+  - GET `/api/membership/tiers/progress`
+  - auth via JWT, hitung `SUM(transaction.totalAmount WHERE archived=0 AND presence=1)`
+  - bandingkan dengan `tier.requirementTransactionOfTier` untuk tier berikutnya
+  - return: `{ totalTransaction, currentTier, nextTier, canUpgrade, reachedNextTier, pointsToNextTier, progressPercent, isHighestTier, balancePoint }`
+
+- [x] Member bisa upgrade tier
+  - POST `/api/membership/tiers/upgrade`
+  - auth via JWT, validasi `canUpgrade` (totalTransaction >= requirementTransactionOfTier next tier)
+  - update `members.tierId` ke tier berikutnya
+  - return: progress terbaru setelah upgrade
+
+- [x] Baca semua tier aktif
+  - GET `/api/membership/tiers`
+  - tanpa auth, return semua tier dari tabel `tier` yang aktif
+
 ### Catatan
 
 - 2026-04-20: Tambah validasi `tier.minAmount` di endpoint redeem POS V1 (`executeRedeemPointV1ByMember`). Jika `minAmount > 0` dan `amount < minAmount`, request ditolak 400. Logika ada di `redeem.service.js`.
@@ -70,3 +86,13 @@
 - Memperbarui tampilan frontend (user) untuk mengambil nama dari `localStorage` (`membership_member`) dan menambahkan getter di komponen serta verifikasi dev server lokal.
 - Menambahkan format tanggal pada report menjadi `YYYY-MM-DD HH:MM:SS` di template EJS.
 - Menjalankan dan memverifikasi report HTML, lalu membersihkan skrip sementara yang dibuat untuk pemeriksaan.
+
+## Progress 2026-05-04
+
+- Membuat `tiers.controller.js` dengan 3 endpoint: `list`, `progress`, `upgrade`.
+- `GET /tiers`: baca semua tier aktif tanpa auth.
+- `GET /tiers/progress`: hitung progress tier member berdasarkan `SUM(transaction.totalAmount)` vs `requirementTransactionOfTier`; return `canUpgrade`, `progressPercent`, `pointsToNextTier`, `isHighestTier`, dll.
+- `POST /tiers/upgrade`: validasi `canUpgrade`, update `members.tierId` ke tier berikutnya, return progress terbaru.
+- Membuat `tiers.routes.js` dan mendaftarkan ke `routes/membership/index.js` sebagai `/tiers`.
+- Integrasi frontend Angular: `loyalty-bonuses.page.ts` dan `.html` terhubung ke ketiga endpoint tier, termasuk progress bar dan tombol Upgrade Tier.
+- Merchant name join di `membersVoucher.controller.js`: semua endpoint (listMy, listHistory, getById) JOIN tabel `merchant` untuk mendapatkan `usedMerchantName`.

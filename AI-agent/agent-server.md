@@ -164,6 +164,80 @@ AI-AGENT/
 6. Insert `points.pointOut` + `transaction.totalRedeem` dalam 1 DB transaction
 7. Emit Socket.IO event `redeem:success` atau `redeem:failed` ke `member:{memberId}`
 
+### Algoritma Tier Member
+
+#### Konsep Dasar
+
+| Field Tabel `tier` | Keterangan |
+|---|---|
+| `requirementTransactionOfTier` | Total nominal transaksi yang harus dicapai member untuk naik ke tier ini |
+| `percentOfCashBack` | % cashback dipakai untuk hitung point (jika accumulationAmount = 0) |
+| `accumulationAmount` | Kelipatan nominal transaksi untuk dapat 1 point (jika > 0) |
+| `minAmount` | Minimum point per redeem (0 = tidak ada minimum) |
+| `maxPercentOfBill` | Maksimum % dari bill yang boleh diredeem |
+
+#### Cara Menentukan Current Tier
+
+Tier member disimpan di `members.tierId`. Tier ditentukan saat transaksi point masuk pertama kali, atau diupgrade secara manual oleh member.
+
+#### Cara Menghitung Progress Tier
+
+```
+totalTransaction = SUM(transaction.totalAmount)
+                   WHERE memberId = ? AND archived = 0 AND presence = 1
+```
+
+1. Ambil tier saat ini (`currentTier`) dari `members.tierId`
+2. Ambil `currentTierRequirement = currentTier.requirementTransactionOfTier`
+3. Cari `nextTier` = tier pertama dengan `requirementTransactionOfTier > currentTierRequirement` (ORDER BY ASC)
+4. `pointsToNextTier = MAX(0, nextTier.requirementTransactionOfTier - totalTransaction)`
+5. `reachedNextTier = totalTransaction >= nextTier.requirementTransactionOfTier`
+6. `canUpgrade = reachedNextTier`
+
+#### Cara Hitung Progress Bar (%)
+
+```
+span    = nextTier.requirementTransactionOfTier - currentTier.requirementTransactionOfTier
+progress = totalTransaction - currentTier.requirementTransactionOfTier
+
+progressPercent = CLAMP((progress / span) * 100, 0, 100)
+```
+
+- Jika `nextTier` tidak ada (`isHighestTier = true`): `progressPercent = 100`
+
+#### Upgrade Tier
+
+1. Validasi `canUpgrade = true` (jika tidak → tolak 400)
+2. Validasi `!isHighestTier` (jika sudah tertinggi → tolak 400)
+3. `UPDATE members SET tierId = nextTier.id WHERE id = memberId`
+4. Return payload progress terbaru (re-query setelah update)
+
+> **Catatan**: Akumulasi transaksi (`totalTransaction`) **tidak direset** setelah upgrade tier. Member tetap membawa total transaksi mereka ke tier berikutnya, sehingga mereka bisa langsung eligible ke tier selanjutnya jika sudah melewati threshold.
+
+#### Endpoint Tier
+
+| Method | URL | Auth | Keterangan |
+|---|---|---|---|
+| GET | `/api/membership/tiers` | — | Daftar semua tier aktif |
+| GET | `/api/membership/tiers/progress` | JWT Bearer | Progress tier member saat ini |
+| POST | `/api/membership/tiers/upgrade` | JWT Bearer | Upgrade tier jika `canUpgrade = true` |
+
+#### Response `/tiers/progress`
+
+```json
+{
+  "memberId": 1,
+  "totalTransaction": 500000,
+  "currentTier": { "id": 1, "name": "Silver", "requirementTransactionOfTier": 0 },
+  "nextTier": { "id": 2, "name": "Gold", "requirementTransactionOfTier": 1000000 },
+  "pointsToNextTier": 500000,
+  "reachedNextTier": false,
+  "canUpgrade": false,
+  "progressPercent": 50,
+  "isHighestTier": false
+}
+```
+
 ---
 
 ## 8. Socket.IO
