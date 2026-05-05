@@ -21,7 +21,7 @@ const toNumber = (value, fallback) => {
 };
 
 const jwtSecret = process.env.JWT_SECRET || "local-dev-secret";
-const jwtExpiresIn = process.env.JWT_EXPIRES_IN || "1d";
+const jwtExpiresIn = process.env.JWT_EXPIRES_IN || "360d";
 const bcryptSaltRounds = toNumber(process.env.BCRYPT_SALT_ROUNDS, 10);
 
 const sanitizeUser = (user) => ({

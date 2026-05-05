@@ -28,11 +28,6 @@
       "name": "V1 POS",
       "description": "Endpoint POS v1 tanpa JWT (sementara)"
     }
-    ,
-    {
-      "name": "Points",
-      "description": "Endpoint pencatatan transaksi point dari POS ke Membership"
-    }
   ],
   "schemes": [
     "http"
@@ -61,7 +56,6 @@
         }
       }
     },
-  
     "/api/v1/pos/members/balance": {
       "get": {
         "tags": [
@@ -410,70 +404,5 @@
         }
       }
     }
-
-    ,"/api/v1/pos/redeem-voucher": {
-      "post": {
-        "tags": [
-          "V1 POS"
-        ],
-        "summary": "Redeem voucher by barcode for POS",
-        "description": "Redeem member voucher using barcode. Body contains `barcode`. Header usage sama seperti endpoint POS lainnya (Authorization).",
-        "consumes": ["application/json"],
-        "produces": ["application/json"],
-        "parameters": [
-          {
-            "name": "Authorization",
-            "in": "header",
-            "required": true,
-            "type": "string",
-            "description": "Bearer token. Format: Bearer YOUR_TOKEN_HERE"
-          },
-          {
-            "in": "body",
-            "name": "body",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "required": ["barcode"],
-              "properties": {
-                "barcode": {
-                  "type": "string",
-                  "description": "Voucher barcode",
-                  "example": "V-4-M-1-moqx4so3"
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Voucher redeemed successfully",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "success": { "type": "boolean", "example": true },
-                "message": { "type": "string", "example": "Voucher redeemed successfully" },
-                "data": {
-                  "type": "object",
-                  "properties": {
-                    "id": { "type": "integer", "example": 123 },
-                    "voucherId": { "type": "integer", "example": 4 },
-                    "memberId": { "type": "integer", "example": 1 },
-                    "barcode": { "type": "string", "example": "V-4-M-1-moqx4so3" },
-                    "usedDate": { "type": "string", "example": "2026-05-05 12:00:00" },
-                    "usedMarchantId": { "type": "integer", "example": 2 }
-                  }
-                }
-              }
-            }
-          },
-          "404": { "description": "Voucher not found" },
-          "409": { "description": "Voucher already used" },
-          "422": { "description": "Validation failed (barcode required)" }
-        }
-      }
-    }
-
-    
   }
 }

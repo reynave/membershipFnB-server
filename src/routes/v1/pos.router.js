@@ -14,5 +14,7 @@ router.get('/members/balance', posV1AuthMiddleware, posController.getBalance);
 router.get('/members/history/today', posV1AuthMiddleware, posController.getHistoryToday);
 router.post('/points/in', posV1AuthMiddleware, posController.createPointIn);
 router.post('/redeem', posV1AuthMiddleware, posController.redeemPoint);
+router.post('/redeem-voucher', posV1AuthMiddleware, posController.redeemVoucher);
+
 
 module.exports = router;

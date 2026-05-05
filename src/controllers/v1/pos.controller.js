@@ -1,6 +1,7 @@
 const { fail, success } = require('../../helpers/response');
 const pointService = require('../../modules/membership/point.service');
 const redeemService = require('../../modules/membership/redeem.service');
+const { query, getPool } = require('../../config/db');
 
 const mysqlDateTimePattern = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
 
@@ -213,9 +214,80 @@ const redeemPoint = async (req, res, next) => {
   }
 };
 
+const redeemVoucher = async (req, res, next) => {
+  try {
+    const barcode = String(req.body?.barcode || '').trim();
+
+    if (!barcode) {
+      return fail(res, 'barcode is required', 422);
+    }
+
+    const merchantId = resolvePosMerchantId(req) || 0;
+    const pool = await getPool();
+    const conn = await pool.getConnection();
+
+    try {
+      const [rows] = await conn.execute(
+        `SELECT mv.id, mv.voucherId, mv.memberId, mv.barcode, mv.used
+         FROM members_voucher mv
+         WHERE mv.barcode = ? AND mv.presence = 1
+         LIMIT 1`,
+        [barcode]
+      );
+
+      const voucher = rows[0];
+
+      if (!voucher) {
+        return fail(res, 'Voucher not found', 404);
+      }
+
+      if (Number(voucher.used) && Number(voucher.used) !== 0) {
+        return fail(res, 'Voucher already used', 409);
+      }
+
+      const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+      await conn.beginTransaction();
+
+      await conn.execute(
+        `UPDATE members_voucher
+         SET used = 1, usedDate = ?, updateDate = ?, usedMarchantId = ?
+         WHERE id = ?`,
+        [now, now, merchantId, voucher.id]
+      );
+
+      await conn.commit();
+
+      return success(
+        res,
+        {
+          id: voucher.id,
+          voucherId: voucher.voucherId,
+          memberId: voucher.memberId,
+          barcode: voucher.barcode,
+          usedDate: now,
+          usedMarchantId: merchantId
+        },
+        'Voucher redeemed successfully',
+        200
+      );
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
+  } catch (err) {
+    return next(err);
+  }
+};
+
 module.exports = {
   getBalance,
   getHistoryToday,
   createPointIn,
-  redeemPoint
+  redeemPoint,
+  redeemVoucher
 };
+
+
