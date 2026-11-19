@@ -12,6 +12,7 @@ const adminUploadsRoutes      = require('./admin.uploads.routes');
 const adminUsersRoutes        = require('./admin.users.routes');
 const adminVouchersRoutes     = require('./admin.vouchers.routes');
 const adminPromosRoutes       = require('./admin.promos.routes');
+const adminImportsRoutes      = require('./admin.member-sales-imports.routes');
 
 const router = express.Router();
 
@@ -34,5 +35,6 @@ router.use('/uploads',      adminUploadsRoutes);
 router.use('/users',        adminUsersRoutes);
 router.use('/vouchers',     adminVouchersRoutes);
 router.use('/promos',       adminPromosRoutes);
+router.use('/imports',      adminImportsRoutes);
 
 module.exports = router;
