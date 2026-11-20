@@ -9,16 +9,50 @@ const ALLOWED_EXTENSIONS = new Set(['.csv', '.txt']);
 const ALLOWED_MIME_TYPES = new Set([
   'text/csv',
   'text/plain',
+  'text/comma-separated-values',
+  'text/x-csv',
   'application/csv',
+  'application/x-csv',
   'application/vnd.ms-excel',
   'application/octet-stream'
 ]);
 
-const fileFilter = (_req, file, cb) => {
-  const extension = path.extname(file.originalname || '').toLowerCase();
+/**
+ * Multer/Busboy can hand over the filename as latin1 even when the browser sent
+ * UTF-8. Convert only when the result is valid UTF-8, so ASCII names stay intact.
+ */
+const decodeFileName = (name) => {
+  const value = String(name || '');
 
-  if (!ALLOWED_EXTENSIONS.has(extension) || !ALLOWED_MIME_TYPES.has(file.mimetype)) {
-    const error = new Error('Only .csv or .txt report files are allowed');
+  if (!value || /[^\u0000-\u00ff]/.test(value)) {
+    return value;
+  }
+
+  const decoded = Buffer.from(value, 'latin1').toString('utf8');
+  return decoded.includes('\uFFFD') ? value : decoded;
+};
+
+const fileFilter = (_req, file, cb) => {
+  const originalName = decodeFileName(file.originalname);
+  const extension = path.extname(originalName).toLowerCase();
+  const mimetype = String(file.mimetype || '').toLowerCase();
+
+  file.originalname = originalName;
+
+  if (!ALLOWED_EXTENSIONS.has(extension)) {
+    const error = new Error(
+      `Report must have a .csv or .txt extension (received "${extension || originalName || 'unknown'}")`
+    );
+    error.statusCode = 422;
+    return cb(error);
+  }
+
+  // Browsers report POS exports inconsistently; the extension check above is the
+  // primary guard, so only reject MIME types that are clearly something else.
+  if (mimetype && !ALLOWED_MIME_TYPES.has(mimetype)) {
+    const error = new Error(
+      `Unsupported content type "${file.mimetype}". Upload the exported report as .csv or .txt`
+    );
     error.statusCode = 422;
     return cb(error);
   }
@@ -51,8 +85,8 @@ const handleError = (res, next, error) => {
     return fail(res, error.message, error.statusCode || 422, error.details);
   }
 
-  if (error.statusCode && error.details) {
-    return fail(res, error.message, error.statusCode, error.details);
+  if (error.statusCode && error.statusCode < 500) {
+    return fail(res, error.message, error.statusCode, error.details || null);
   }
 
   return next(error);
@@ -76,6 +110,12 @@ const upload = (req, res, next) => {
 
     if (!req.file) {
       const error = new Error('Report file is required (multipart field name: file)');
+      error.statusCode = 422;
+      return handleError(res, next, error);
+    }
+
+    if (!Buffer.isBuffer(req.file.buffer) || req.file.buffer.length === 0) {
+      const error = new Error('Report file is empty');
       error.statusCode = 422;
       return handleError(res, next, error);
     }

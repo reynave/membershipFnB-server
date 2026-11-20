@@ -33,16 +33,22 @@ const applyIssue = (target, severity, message) => {
 
 const formatAmount = (value) => (value === null || value === undefined ? '-' : String(round2(value)));
 
+const sumLines = (lines, key) => round2(lines.reduce((total, line) => total + (line[key] || 0), 0));
+
 /**
- * Run business validations over parsed data.
- * Rules that need a product/member master are reported as skipped because the
- * current schema has no PLU -> product and no POS member code -> members mapping.
+ * Jalankan validasi bisnis di atas data hasil parser.
+ * Semua perbandingan angka berasal dari `parsed.issues` supaya parser menjadi satu-satunya
+ * sumber kebenaran; validator hanya memetakan isu ke baris/member dan menghitung ringkasan.
+ * Aturan yang butuh master produk/member dilaporkan sebagai `skippedChecks` karena skema
+ * saat ini belum punya pemetaan PLU -> produk dan POS Member ID -> members.
  *
  * @param {object} parsed result of parseMemberSales()
  * @param {object} [options]
  * @returns {object}
  */
 const validateMemberSales = (parsed, options = {}) => {
+  const issues = Array.isArray(parsed.issues) ? parsed.issues : [];
+
   const lines = parsed.lines.map((line) => ({
     ...line,
     priceQtyOk: null,
@@ -67,6 +73,8 @@ const validateMemberSales = (parsed, options = {}) => {
       lineNo: error.lineNo,
       memberId: null,
       memberName: null,
+      memberStartLineNo: null,
+      memberKey: null,
       checkNo: null,
       checkSeq: null,
       plu: null,
@@ -89,95 +97,84 @@ const validateMemberSales = (parsed, options = {}) => {
     linesByNumber.set(synthetic.lineNo, synthetic);
   }
 
+  for (const issue of issues) {
+    if (issue.scope !== 'line') {
+      continue;
+    }
+
+    const line = linesByNumber.get(issue.lineNo);
+
+    if (!line) {
+      continue;
+    }
+
+    if (issue.type === 'priceQty') {
+      line.priceQtyOk = 0;
+    } else if (issue.type === 'itemTotal') {
+      line.totalOk = 0;
+    }
+
+    applyIssue(line, issue.severity, issue.message);
+  }
+
   for (const line of lines) {
-    if (line.price !== null && line.qty !== null && line.itemSales !== null) {
-      const expected = round2(line.price * line.qty);
-      line.priceQtyOk = amountsEqual(expected, line.itemSales) ? 1 : 0;
-
-      if (!line.priceQtyOk) {
-        applyIssue(
-          line,
-          'ERROR',
-          `Price x Qty (${formatAmount(expected)}) does not match Item Sales (${formatAmount(line.itemSales)})`
-        );
-      }
+    if (line.priceQtyOk === null && line.price !== null && line.qty !== null && line.itemSales !== null) {
+      line.priceQtyOk = 1;
     }
 
-    if (line.itemSales !== null && line.itemDisc !== null && line.itemTotal !== null) {
-      const expected = round2(line.itemSales - line.itemDisc);
-      line.totalOk = amountsEqual(expected, line.itemTotal) ? 1 : 0;
-
-      if (!line.totalOk) {
-        applyIssue(
-          line,
-          'WARNING',
-          `Item Total (${formatAmount(line.itemTotal)}) does not match Item Sales - Item Disc (${formatAmount(expected)})`
-        );
-      }
+    if (line.totalOk === null && line.itemSales !== null && line.itemDisc !== null && line.itemTotal !== null) {
+      line.totalOk = 1;
     }
 
-    if (!line.checkSeq) {
+    if (line.memberKey && !line.checkSeq && !line.severity) {
       applyIssue(line, 'WARNING', 'Check# is missing for this item row');
     }
   }
 
+  const memberIssues = new Map();
+
+  for (const issue of issues) {
+    if (issue.scope !== 'member') {
+      continue;
+    }
+
+    const key = issue.memberStartLineNo;
+    const bucket = memberIssues.get(key) || [];
+    bucket.push(issue);
+    memberIssues.set(key, bucket);
+  }
+
   const members = parsed.members.map((member) => {
-    const memberLines = lines.filter((line) => line.memberId === member.memberId);
-    const cItemQty = memberLines.reduce((total, line) => total + (line.qty || 0), 0);
-    const cItemSales = round2(memberLines.reduce((total, line) => total + (line.itemSales || 0), 0));
-    const cItemTotal = round2(memberLines.reduce((total, line) => total + (line.itemTotal || 0), 0));
-    const cCheckCount = new Set(memberLines.map((line) => line.checkSeq).filter(Boolean)).size;
+    const memberLines = lines.filter((line) => line.memberStartLineNo === member.startLineNo);
+    const computed = member.computed || {
+      itemQty: memberLines.reduce((total, line) => total + (line.qty || 0), 0),
+      itemSales: sumLines(memberLines, 'itemSales'),
+      itemTotal: sumLines(memberLines, 'itemTotal'),
+      checkCount: new Set(memberLines.map((line) => line.checkSeq).filter(Boolean)).size
+    };
 
     const enriched = {
       ...member,
-      cItemQty,
-      cItemSales,
-      cItemTotal,
-      cCheckCount,
+      cItemQty: computed.itemQty,
+      cItemSales: computed.itemSales,
+      cItemTotal: computed.itemTotal,
+      cCheckCount: computed.checkCount,
       severity: null,
       message: null
     };
 
-    if (member.fItemTotal !== null && !sameAmount(cItemTotal, member.fItemTotal)) {
-      applyIssue(
-        enriched,
-        'WARNING',
-        `Item rows Item Total (${formatAmount(cItemTotal)}) differs from the member footer (${formatAmount(member.fItemTotal)})`
-      );
-    }
-
-    if (member.fItemSales !== null && !sameAmount(cItemSales, member.fItemSales)) {
-      applyIssue(
-        enriched,
-        'ERROR',
-        `Item rows Item Sales (${formatAmount(cItemSales)}) does not match the member footer (${formatAmount(member.fItemSales)})`
-      );
-    }
-
-    if (member.fItemQty !== null && cItemQty !== member.fItemQty) {
-      applyIssue(
-        enriched,
-        'ERROR',
-        `Item rows Qty (${cItemQty}) does not match the member footer (${member.fItemQty})`
-      );
-    }
-
-    if (member.fCheckCount !== null && cCheckCount !== member.fCheckCount) {
-      applyIssue(
-        enriched,
-        'ERROR',
-        `Item rows Check# count (${cCheckCount}) does not match the member footer (${member.fCheckCount})`
-      );
+    for (const issue of memberIssues.get(member.startLineNo) || []) {
+      applyIssue(enriched, issue.severity, issue.message);
     }
 
     return enriched;
   });
 
   const totalItemQty = lines.reduce((total, line) => total + (line.qty || 0), 0);
-  const totalItemSales = round2(lines.reduce((total, line) => total + (line.itemSales || 0), 0));
-  const totalItemTotal = round2(lines.reduce((total, line) => total + (line.itemTotal || 0), 0));
+  const totalItemSales = sumLines(lines, 'itemSales');
+  const totalItemTotal = sumLines(lines, 'itemTotal');
   const totalChecks = new Set(
-    lines.filter((line) => line.memberId && line.checkSeq).map((line) => `${line.memberId}|${line.checkSeq}`)
+    lines.filter((line) => line.memberKey && line.checkSeq).map((line) => `${line.memberKey}|${line.checkSeq}`)
   ).size;
 
   const totals = {
@@ -189,8 +186,9 @@ const validateMemberSales = (parsed, options = {}) => {
     itemTotal: totalItemTotal
   };
 
-  const notices = parsed.warnings.map((warning) => ({
+  const notices = (Array.isArray(parsed.warnings) ? parsed.warnings : []).map((warning) => ({
     lineNo: warning.lineNo || null,
+    code: warning.code || null,
     severity: 'WARNING',
     message: warning.message
   }));
@@ -198,6 +196,7 @@ const validateMemberSales = (parsed, options = {}) => {
   if (parsed.footer.itemSales !== null && !sameAmount(totalItemSales, parsed.footer.itemSales)) {
     notices.push({
       lineNo: null,
+      code: 'footerItemSales',
       severity: 'WARNING',
       message: `Total Item Sales of parsed rows (${formatAmount(totalItemSales)}) differs from the report footer (${formatAmount(
         parsed.footer.itemSales
@@ -208,6 +207,7 @@ const validateMemberSales = (parsed, options = {}) => {
   if (parsed.footer.itemTotal !== null && !sameAmount(totalItemTotal, parsed.footer.itemTotal)) {
     notices.push({
       lineNo: null,
+      code: 'footerItemTotal',
       severity: 'WARNING',
       message: `Total Item Total of parsed rows (${formatAmount(totalItemTotal)}) differs from the report footer (${formatAmount(
         parsed.footer.itemTotal
@@ -251,4 +251,3 @@ module.exports = {
   round2,
   amountsEqual
 };
-
