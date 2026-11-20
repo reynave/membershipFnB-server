@@ -8,8 +8,21 @@ const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 200;
 const AMOUNT_BASES = new Set(['item_sales', 'item_total', 'gross_total']);
 
+/** Catatan baris transaction yang dibuat oleh commit CSV Igourmate. */
+const CSV_COMMIT_NOTE = 'CSV Igourmate Import';
+
+/**
+ * `import_member.period_from` diisi dari periode laporan dan `check_no` dari
+ * `import_line.check_no`. Kolom periode bisa bernama `period_from` (skema baru)
+ * atau `date` (varian ALTER TABLE), jadi urutannya dipakai sebagai fallback.
+ */
+const MEMBER_PERIOD_COLUMNS = ['period_from', 'date'];
+const MEMBER_PERIOD_DEFAULT = '2000-01-01';
+
 const MEMBER_COLUMNS = [
   'batch_id',
+  'period_from',
+  'check_no',
   'member_id',
   'member_name',
   'start_line_no',
@@ -116,6 +129,9 @@ const formatDateTime = (value) => {
 
 const toNumber = (value) => (value === null || value === undefined ? 0 : Number(value));
 
+/** Keeps NULL as null so the API returns the import_member value exactly as stored. */
+const toNullableNumber = (value) => (value === null || value === undefined ? null : Number(value));
+
 const serializeBatch = (row) => ({
   batchId: Number(row.id),
   fileName: row.file_name,
@@ -169,24 +185,26 @@ const serializeMember = (row) => ({
   id: Number(row.id),
   memberId: row.member_id,
   memberName: row.member_name,
+  periodFrom: formatDateOnly(row.period_from || row.date),
+  checkNo: row.check_no || '',
   startLineNo: Number(row.start_line_no),
   footer: {
-    itemQty: toNumber(row.f_item_qty),
-    itemSales: toNumber(row.f_item_sales),
-    itemDisc: toNumber(row.f_item_disc),
-    itemTotal: toNumber(row.f_item_total),
-    checkCount: Number(row.f_check_count),
-    cover: toNumber(row.f_cover),
-    checkDisc: toNumber(row.f_check_disc),
-    tax: toNumber(row.f_tax),
-    sc: toNumber(row.f_sc),
-    grossTotal: toNumber(row.f_gross_total)
+    itemQty: toNullableNumber(row.f_item_qty),
+    itemSales: toNullableNumber(row.f_item_sales),
+    itemDisc: toNullableNumber(row.f_item_disc),
+    itemTotal: toNullableNumber(row.f_item_total),
+    checkCount: toNullableNumber(row.f_check_count),
+    cover: toNullableNumber(row.f_cover),
+    checkDisc: toNullableNumber(row.f_check_disc),
+    tax: toNullableNumber(row.f_tax),
+    sc: toNullableNumber(row.f_sc),
+    grossTotal: toNullableNumber(row.f_gross_total)
   },
   computed: {
-    itemQty: toNumber(row.c_item_qty),
-    itemSales: toNumber(row.c_item_sales),
-    itemTotal: toNumber(row.c_item_total),
-    checkCount: Number(row.c_check_count)
+    itemQty: toNullableNumber(row.c_item_qty),
+    itemSales: toNullableNumber(row.c_item_sales),
+    itemTotal: toNullableNumber(row.c_item_total),
+    checkCount: toNullableNumber(row.c_check_count)
   },
   severity: row.severity,
   message: row.message
@@ -214,6 +232,78 @@ const bulkInsert = async (connection, table, columns, rows) => {
     // eslint-disable-next-line no-await-in-loop
     await connection.query(`INSERT INTO \`${table}\` (${columns.join(', ')}) VALUES ${placeholders}`, params);
   }
+};
+
+/**
+ * Kolom `period_from` dan `check_no` ditambahkan ke import_member lewat ALTER TABLE.
+ * Kolom yang benar-benar ada dideteksi dari skema (sekali per proses) supaya insert
+ * staging tetap jalan baik kolom periode bernama `period_from` maupun `date`.
+ */
+let importMemberColumnsPromise = null;
+
+const resolveImportMemberColumns = async (connection) => {
+  if (!importMemberColumnsPromise) {
+    importMemberColumnsPromise = (async () => {
+      const [rows] = await connection.query(
+        `SELECT COLUMN_NAME
+         FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'import_member'`
+      );
+
+      const existing = new Set(rows.map((row) => row.COLUMN_NAME));
+      const periodColumn = MEMBER_PERIOD_COLUMNS.find((column) => existing.has(column)) || null;
+      const optionalColumns = [periodColumn, existing.has('check_no') ? 'check_no' : null].filter(Boolean);
+      const baseColumns = MEMBER_COLUMNS.filter(
+        (column) => column !== 'period_from' && column !== 'date' && column !== 'check_no' && column !== 'batch_id'
+      );
+
+      return ['batch_id', ...optionalColumns, ...baseColumns];
+    })().catch((error) => {
+      importMemberColumnsPromise = null;
+      throw error;
+    });
+  }
+
+  return importMemberColumnsPromise;
+};
+
+/**
+ * `transaction` di beberapa database belum punya `import_batch_id` (migrasi belum
+ * dijalankan), jadi kolom yang di-insert disaring sesuai skema aktual.
+ */
+let transactionColumnsPromise = null;
+
+const resolveTransactionColumns = async (connection) => {
+  if (!transactionColumnsPromise) {
+    transactionColumnsPromise = (async () => {
+      const [rows] = await connection.query(
+        `SELECT COLUMN_NAME
+         FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'transaction'`
+      );
+
+      const existing = new Set(rows.map((row) => row.COLUMN_NAME));
+      return TRANSACTION_COLUMNS.filter((column) => existing.has(column));
+    })().catch((error) => {
+      transactionColumnsPromise = null;
+      throw error;
+    });
+  }
+
+  return transactionColumnsPromise;
+};
+
+/** Check pertama milik member (urutan file) untuk kolom import_member.check_no. */
+const resolveMemberCheckNo = (member, memberLines) => {
+  const checks = Array.isArray(member.checks) ? member.checks : [];
+  const firstCheck = checks.find((check) => check && check.no);
+
+  if (firstCheck) {
+    return clip(firstCheck.no, 50);
+  }
+
+  const firstLine = (memberLines || []).find((line) => line.checkNo);
+  return firstLine ? clip(firstLine.checkNo, 50) : '';
 };
 
 const findCommittedDuplicates = async (connection, fileHash, header) => {
@@ -288,28 +378,50 @@ const createPreview = async ({ buffer, fileName, actor, override = false }) => {
 
     batchId = Number(batchResult.insertId);
 
-    const memberRows = validation.members.map((member) => ({
-      batch_id: batchId,
-      member_id: clip(member.memberId, 30),
-      member_name: clip(member.memberName, 150),
-      start_line_no: member.startLineNo,
-      f_item_qty: member.fItemQty,
-      f_item_sales: member.fItemSales,
-      f_item_disc: member.fItemDisc,
-      f_item_total: member.fItemTotal,
-      f_check_count: member.fCheckCount,
-      f_cover: member.fCover,
-      f_check_disc: member.fCheckDisc,
-      f_tax: member.fTax,
-      f_sc: member.fSc,
-      f_gross_total: member.fGrossTotal,
-      c_item_qty: member.cItemQty,
-      c_item_sales: member.cItemSales,
-      c_item_total: member.cItemTotal,
-      c_check_count: member.cCheckCount,
-      severity: member.severity,
-      message: clip(member.message, 500)
-    }));
+    // import_member.period_from = periode laporan, import_member.check_no = check
+    // pertama member yang bersangkutan (diambil dari baris import_line-nya).
+    const memberColumns = await resolveImportMemberColumns(connection);
+    const memberLinesByStart = new Map();
+
+    for (const line of validation.lines) {
+      if (!line.memberStartLineNo) {
+        continue;
+      }
+
+      const bucket = memberLinesByStart.get(line.memberStartLineNo) || [];
+      bucket.push(line);
+      memberLinesByStart.set(line.memberStartLineNo, bucket);
+    }
+
+    const memberRows = validation.members.map((member) => {
+      const checkNo = resolveMemberCheckNo(member, memberLinesByStart.get(member.startLineNo));
+
+      return {
+        batch_id: batchId,
+        period_from: header.periodFrom,
+        date: header.periodFrom,
+        check_no: checkNo,
+        member_id: clip(member.memberId, 30),
+        member_name: clip(member.memberName, 150),
+        start_line_no: member.startLineNo,
+        f_item_qty: member.fItemQty,
+        f_item_sales: member.fItemSales,
+        f_item_disc: member.fItemDisc,
+        f_item_total: member.fItemTotal,
+        f_check_count: member.fCheckCount,
+        f_cover: member.fCover,
+        f_check_disc: member.fCheckDisc,
+        f_tax: member.fTax,
+        f_sc: member.fSc,
+        f_gross_total: member.fGrossTotal,
+        c_item_qty: member.cItemQty,
+        c_item_sales: member.cItemSales,
+        c_item_total: member.cItemTotal,
+        c_check_count: member.cCheckCount,
+        severity: member.severity,
+        message: clip(member.message, 500)
+      };
+    });
 
     const lineRows = validation.lines.map((line) => ({
       batch_id: batchId,
@@ -334,7 +446,7 @@ const createPreview = async ({ buffer, fileName, actor, override = false }) => {
       raw_line: clip(line.rawLine, 1000) || ''
     }));
 
-    await bulkInsert(connection, 'import_member', MEMBER_COLUMNS, memberRows);
+    await bulkInsert(connection, 'import_member', memberColumns, memberRows);
     await bulkInsert(connection, 'import_line', LINE_COLUMNS, lineRows);
 
     await connection.commit();
@@ -376,6 +488,9 @@ const listBatches = async (options = {}) => {
   if (options.status) {
     whereClauses.push('status = ?');
     params.push(String(options.status).trim().toUpperCase());
+  } else {
+    // Batch yang sudah di-commit bukan lagi "staging", jadi default-nya disembunyikan.
+    whereClauses.push("status <> 'COMMITTED'");
   }
 
   if (options.search) {
@@ -790,7 +905,13 @@ const commitBatch = async (
       }
     }
 
-    await bulkInsert(connection, 'transaction', TRANSACTION_COLUMNS, transactions);
+    // Kolom disaring sesuai skema: `import_batch_id` belum tentu ada di database lama.
+    await bulkInsert(
+      connection,
+      'transaction',
+      await resolveTransactionColumns(connection),
+      transactions
+    );
 
     const [updateResult] = await connection.query(
       `UPDATE import_batch
@@ -821,6 +942,242 @@ const commitBatch = async (
             `No merchant matches outlet "${batch.outlet || 'unknown'}"; transactions were stored with merchantId 0. ` +
               'Pass merchantId in the request body to link them to a merchant.'
           ]
+    };
+  } catch (error) {
+    try {
+      await connection.rollback();
+    } catch (rollbackError) {
+      // Connection may already be rolled back; keep the original error.
+    }
+
+    if (error.code === 'ER_DUP_ENTRY') {
+      throw httpError(`Duplicate bill detected: ${error.sqlMessage || error.message}`, 409);
+    }
+
+    if (error.code === 'ER_BAD_FIELD_ERROR') {
+      throw httpError(`transaction table is missing a column required by the import: ${error.message}`, 500);
+    }
+
+    throw error;
+  } finally {
+    connection.release();
+  }
+
+  return result;
+};
+
+/**
+ * Commit ringkas: satu baris `import_member` menjadi satu baris `transaction`.
+ *
+ * - memberId    <- import_member.member_id
+ * - totalAmount <- ROUND(import_member.f_gross_total)
+ * - billDate    <- import_member.period_from (fallback import_batch.period_from) 00:00:00
+ * - bill        <- period_from + '.' + import_member.check_no + '.' + import_member.id
+ *
+ * Contoh: periode 2026-01-01, check 00033, id 1 => `2026-01-01.00033.1`.
+ * Karena `import_member.id` (BIGINT AUTO_INCREMENT) selalu unik dan satu batch hanya
+ * boleh di-commit sekali (status PREVIEW -> COMMITTED), nomor bill ini tidak mungkin
+ * duplikat sehingga tidak perlu penyesuaian/akhiran tambahan.
+ */
+const commitToTransaction = async (batchId, { actor, merchantId: merchantIdInput } = {}) => {
+  const pool = await getPool();
+  const connection = await pool.getConnection();
+  let result;
+
+  try {
+    await connection.beginTransaction();
+
+    const [batchRows] = await connection.query('SELECT * FROM import_batch WHERE id = ? FOR UPDATE', [batchId]);
+
+    if (batchRows.length === 0) {
+      throw httpError(`Import batch ${batchId} not found`, 404);
+    }
+
+    const batch = batchRows[0];
+
+    if (batch.status === 'COMMITTED') {
+      throw httpError(`Import batch ${batchId} is already committed`, 409);
+    }
+
+    if (batch.status !== 'PREVIEW') {
+      throw httpError(`Import batch ${batchId} has status ${batch.status} and cannot be committed`, 409);
+    }
+
+    if (Number(batch.error_count) > 0) {
+      throw httpError(
+        `Import batch ${batchId} still has ${batch.error_count} error(s); fix the file and upload it again`,
+        422
+      );
+    }
+
+    const memberColumns = await resolveImportMemberColumns(connection);
+    const periodColumn = MEMBER_PERIOD_COLUMNS.find((column) => memberColumns.includes(column)) || null;
+    const memberSelect = ['id', 'member_id', 'member_name', 'start_line_no', 'f_gross_total'];
+
+    if (periodColumn) {
+      memberSelect.push(periodColumn);
+    }
+
+    if (memberColumns.includes('check_no')) {
+      memberSelect.push('check_no');
+    }
+
+    const [memberRows] = await connection.query(
+      `SELECT ${memberSelect.join(', ')}
+       FROM import_member
+       WHERE batch_id = ?
+       ORDER BY start_line_no ASC, id ASC`,
+      [batchId]
+    );
+
+    if (memberRows.length === 0) {
+      throw httpError(`Import batch ${batchId} has no member row to commit`, 422);
+    }
+
+    // Staging yang di-upload sebelum kolom check_no ada: ambil check dari import_line.
+    const fallbackCheckNos = new Map();
+
+    if (memberRows.some((row) => !String(row.check_no || '').trim())) {
+      const [lineRows] = await connection.query(
+        `SELECT member_id, check_no
+         FROM import_line
+         WHERE batch_id = ? AND member_id IS NOT NULL AND check_no IS NOT NULL AND check_no <> ''
+         ORDER BY member_id ASC, check_seq ASC, line_no ASC`,
+        [batchId]
+      );
+
+      for (const row of lineRows) {
+        if (!fallbackCheckNos.has(row.member_id)) {
+          fallbackCheckNos.set(row.member_id, row.check_no);
+        }
+      }
+    }
+
+    const batchPeriod = formatDateOnly(batch.period_from);
+
+    const prepareRow = (row) => {
+      const memberPeriod = periodColumn ? formatDateOnly(row[periodColumn]) : null;
+      const periodDate = memberPeriod && memberPeriod > MEMBER_PERIOD_DEFAULT ? memberPeriod : batchPeriod;
+
+      if (!periodDate) {
+        throw httpError('Report period is unknown, cannot build billDate', 422);
+      }
+
+      const checkNo = String(row.check_no || fallbackCheckNos.get(row.member_id) || '')
+        .trim()
+        .replace(/\s+/g, '');
+      // Bill = periode + '.' + nomor check + '.' + id baris staging.
+      // `import_member.id` membuat nomor bill unik walau beberapa member memakai
+      // periode & check yang sama.
+      const checkSegment = checkNo || 'NA';
+
+      return {
+        id: String(row.id),
+        memberId: clip(row.member_id, 50) || '',
+        periodDate,
+        checkNo,
+        bill: clip(`${periodDate}.${checkSegment}.${row.id}`, 50),
+        billDate: `${periodDate} 00:00:00`,
+        totalAmount: Math.round(toNumber(row.f_gross_total))
+      };
+    };
+
+    const prepared = memberRows.map(prepareRow);
+
+    const requestedMerchantId =
+      merchantIdInput === undefined || merchantIdInput === null || merchantIdInput === ''
+        ? null
+        : Number.parseInt(merchantIdInput, 10);
+
+    if (requestedMerchantId !== null && (!Number.isInteger(requestedMerchantId) || requestedMerchantId <= 0)) {
+      throw httpError('merchantId must be a positive integer', 422);
+    }
+
+    let merchantId = 0;
+    let merchantMatched = false;
+
+    if (requestedMerchantId !== null) {
+      const [merchantRows] = await connection.query('SELECT id FROM merchant WHERE id = ? LIMIT 1', [
+        requestedMerchantId
+      ]);
+
+      if (merchantRows.length === 0) {
+        throw httpError(`Merchant ${requestedMerchantId} not found`, 404);
+      }
+
+      merchantId = Number(merchantRows[0].id);
+      merchantMatched = true;
+    } else {
+      // Report hanya memuat nama outlet; pakai merchant master bila namanya sama.
+      const [merchantRows] = await connection.query(
+        'SELECT id FROM merchant WHERE LOWER(name) = LOWER(?) AND presence = 1 ORDER BY id ASC LIMIT 1',
+        [batch.outlet || '']
+      );
+
+      if (merchantRows.length > 0) {
+        merchantId = Number(merchantRows[0].id);
+        merchantMatched = true;
+      }
+    }
+
+    const note = clip(`${CSV_COMMIT_NOTE} #${batch.id}`, 250);
+    const transactionColumns = await resolveTransactionColumns(connection);
+    const transactions = prepared.map((row) => ({
+      memberId: row.memberId,
+      merchantId,
+      bill: row.bill,
+      totalAmount: row.totalAmount,
+      totalRedeem: 0,
+      redeemCode: '',
+      approvalCode: '',
+      billDate: row.billDate,
+      note,
+      syncType: 'import',
+      import_batch_id: Number(batch.id)
+    }));
+
+    await bulkInsert(connection, 'transaction', transactionColumns, transactions);
+
+    const [updateResult] = await connection.query(
+      `UPDATE import_batch
+       SET status = 'COMMITTED', committed_at = NOW(), committed_by = ?
+       WHERE id = ? AND status = 'PREVIEW'`,
+      [clip(actor, 100), batchId]
+    );
+
+    if (updateResult.affectedRows !== 1) {
+      throw httpError(`Import batch ${batchId} could not be marked as committed`, 409);
+    }
+
+    await connection.commit();
+
+    const warnings = [];
+
+    if (!merchantMatched) {
+      warnings.push(
+        `No merchant matches outlet "${batch.outlet || 'unknown'}"; transactions were stored with merchantId 0. ` +
+          'Pass merchantId in the request body to link them to a merchant.'
+      );
+    }
+
+    result = {
+      batchId: Number(batchId),
+      status: 'COMMITTED',
+      outlet: batch.outlet,
+      note,
+      merchantId,
+      merchantMatched,
+      billDate: prepared[0].billDate,
+      billFormat: '<period_from>.<import_member.check_no>.<import_member.id>',
+      sampleBills: prepared.slice(0, 10).map((row) => ({
+        id: Number(row.id),
+        memberId: row.memberId,
+        checkNo: row.checkNo,
+        bill: row.bill
+      })),
+      transactionsInserted: transactions.length,
+      totalAmount: transactions.reduce((total, transaction) => total + transaction.totalAmount, 0),
+      warnings
     };
   } catch (error) {
     try {
@@ -889,6 +1246,7 @@ module.exports = {
   getBatchLines,
   getBatchMembers,
   commitBatch,
+  commitToTransaction,
   deleteBatch
 };
 

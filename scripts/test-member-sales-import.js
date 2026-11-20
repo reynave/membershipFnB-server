@@ -51,8 +51,32 @@ const expectRejection = async (label, executor, expectedStatus) => {
   throw new Error(`FAILED: ${label} was expected to fail with ${expectedStatus}`);
 };
 
+let transactionBatchColumnCache = null;
+
+/**
+ * `transaction` di database lama belum punya `import_batch_id`; untuk skema seperti
+ * itu batch dikenali dari kolom `note` (legacy: "Import batch <id> | ...").
+ */
+const transactionBatchFilter = async (batchId) => {
+  if (transactionBatchColumnCache === null) {
+    const rows = await query(
+      `SELECT COLUMN_NAME
+       FROM information_schema.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE()
+         AND TABLE_NAME = 'transaction'
+         AND COLUMN_NAME = 'import_batch_id'`
+    );
+    transactionBatchColumnCache = rows.length > 0;
+  }
+
+  return transactionBatchColumnCache
+    ? { where: 'import_batch_id = ?', params: [batchId] }
+    : { where: '(note LIKE ? OR note LIKE ?)', params: [`Import batch ${batchId} |%`, `%#${batchId}`] };
+};
+
 const purgeBatch = async (batchId) => {
-  await query('DELETE FROM `transaction` WHERE import_batch_id = ?', [batchId]);
+  const filter = await transactionBatchFilter(batchId);
+  await query(`DELETE FROM \`transaction\` WHERE ${filter.where}`, filter.params);
   await query('DELETE FROM import_line WHERE batch_id = ?', [batchId]);
   await query('DELETE FROM import_member WHERE batch_id = ?', [batchId]);
   await query('DELETE FROM import_batch WHERE id = ?', [batchId]);
@@ -125,9 +149,10 @@ const run = async () => {
       `item_total basis writes ${EXPECTED.itemTotal} total amount (got ${firstCommit.totalAmount})`
     );
 
+    const insertedFilter = await transactionBatchFilter(preview.batchId);
     const inserted = await query(
-      'SELECT COUNT(*) AS total FROM `transaction` WHERE import_batch_id = ?',
-      [preview.batchId]
+      `SELECT COUNT(*) AS total FROM \`transaction\` WHERE ${insertedFilter.where}`,
+      insertedFilter.params
     );
     assert(Number(inserted[0].total) === EXPECTED.checks, 'transaction rows are stored in the database');
     assert(
@@ -136,8 +161,8 @@ const run = async () => {
     );
 
     const storedMerchants = await query(
-      'SELECT merchantId, COUNT(*) AS total FROM `transaction` WHERE import_batch_id = ? GROUP BY merchantId',
-      [preview.batchId]
+      `SELECT merchantId, COUNT(*) AS total FROM \`transaction\` WHERE ${insertedFilter.where} GROUP BY merchantId`,
+      insertedFilter.params
     );
     assert(
       storedMerchants.length === 1 && Number(storedMerchants[0].merchantId) === firstCommit.merchantId,

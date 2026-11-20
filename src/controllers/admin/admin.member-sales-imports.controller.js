@@ -213,6 +213,24 @@ const commit = async (req, res, next) => {
   }
 };
 
+/**
+ * Commit versi baru: satu baris import_member -> satu baris transaction
+ * (bill = period_from + '.' + check_no + '.' + import_member.id, totalAmount = f_gross_total).
+ * Dibuat terpisah dari `commit` supaya alur lama tidak berubah.
+ */
+const commitToTransaction = async (req, res, next) => {
+  try {
+    const result = await service.commitToTransaction(parseBatchId(req), {
+      actor: req.user ? req.user.email || req.user.name : null,
+      merchantId: req.body && req.body.merchantId
+    });
+
+    return success(res, result, 'Import batch committed to transaction');
+  } catch (error) {
+    return handleError(res, next, error);
+  }
+};
+
 const remove = async (req, res, next) => {
   try {
     const result = await service.deleteBatch(parseBatchId(req));
@@ -229,5 +247,6 @@ module.exports = {
   lines,
   members,
   commit,
+  commitToTransaction,
   remove
 };
