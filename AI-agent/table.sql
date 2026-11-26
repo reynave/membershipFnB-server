@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS `import_member` (
 
 -- Dumping structure for table membership.members
 CREATE TABLE IF NOT EXISTS `members` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `id` varchar(50) NOT NULL DEFAULT '',
   `tierId` tinyint(3) unsigned NOT NULL DEFAULT 0,
   `phone` varchar(50) NOT NULL DEFAULT '0',
   `name` varchar(120) NOT NULL,
@@ -115,7 +115,7 @@ CREATE TABLE IF NOT EXISTS `members` (
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE KEY `uq_members_email` (`email`),
   UNIQUE KEY `phone` (`phone`)
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table membership.members: ~9 rows (approximately)
 INSERT INTO `members` (`id`, `tierId`, `phone`, `name`, `email`, `birthdate`, `password_hash`, `status`, `verified`, `activated`, `presence`, `inputDate`, `updateDate`) VALUES
@@ -134,7 +134,7 @@ INSERT INTO `members` (`id`, `tierId`, `phone`, `name`, `email`, `birthdate`, `p
 -- Dumping structure for table membership.members_code
 CREATE TABLE IF NOT EXISTS `members_code` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `memberId` int(10) unsigned NOT NULL DEFAULT 0,
+  `memberId` varchar(50) NOT NULL DEFAULT '',
   `redeemCode` varchar(50) NOT NULL DEFAULT '',
   `expDateTime` datetime NOT NULL DEFAULT '2025-01-01 00:00:00',
   `presence` tinyint(4) NOT NULL DEFAULT 1,
@@ -158,7 +158,7 @@ INSERT INTO `members_code` (`id`, `memberId`, `redeemCode`, `expDateTime`, `pres
 -- Dumping structure for table membership.members_logs
 CREATE TABLE IF NOT EXISTS `members_logs` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `userId` int(11) NOT NULL DEFAULT 0,
+  `userId` varchar(50) NOT NULL DEFAULT '',
   `note` varchar(250) NOT NULL DEFAULT '',
   `success` tinyint(4) NOT NULL DEFAULT 0,
   `inputDate` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -183,7 +183,7 @@ INSERT INTO `members_logs` (`id`, `userId`, `note`, `success`, `inputDate`, `upd
 CREATE TABLE IF NOT EXISTS `members_voucher` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `voucherId` int(11) NOT NULL DEFAULT 0,
-  `memberId` smallint(6) NOT NULL DEFAULT 0,
+  `memberId` varchar(50) NOT NULL DEFAULT '',
   `barcode` varchar(50) NOT NULL DEFAULT '0',
   `amount` int(11) NOT NULL DEFAULT 0,
   `expiredDate` date NOT NULL DEFAULT '2028-01-01',
@@ -236,7 +236,7 @@ INSERT INTO `merchant` (`id`, `name`, `startDate`, `expDate`, `description`, `im
 CREATE TABLE IF NOT EXISTS `points` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `transactionId` int(11) NOT NULL DEFAULT 0,
-  `memberId` int(11) NOT NULL DEFAULT 0,
+  `memberId` varchar(50) NOT NULL DEFAULT '',
   `merchantId` int(11) NOT NULL DEFAULT 0,
   `tierId` smallint(6) NOT NULL DEFAULT 0,
   `pointIn` bigint(20) NOT NULL DEFAULT 0,

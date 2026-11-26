@@ -22,6 +22,7 @@ const ACTOR = 'igourmete-smoke-test@example.com';
 let passed = 0;
 const createdBatches = [];
 const createdBills = [];
+const createdMemberIds = [];
 
 const pad2 = (value) => String(value).padStart(2, '0');
 
@@ -187,6 +188,45 @@ const start = async () => {
     );
     createdBills.push(...expectedBills);
 
+    const stagedMembers = await query(
+      `SELECT DISTINCT member
+         FROM dbf_igourmete_daily
+        WHERE batchId = ? AND isDeleted = 0 AND severity <> 'ERROR'
+        ORDER BY member ASC`,
+      [batch.batchId]
+    );
+    const memberCodes = stagedMembers
+      .map((row) => String(row.member || '').trim())
+      .filter((code) => code && code !== '0');
+    const blankMemberRows = Number(
+      (
+        await query(
+          `SELECT COUNT(*) AS total
+             FROM dbf_igourmete_daily
+            WHERE batchId = ? AND isDeleted = 0 AND severity <> 'ERROR' AND member = ''`,
+          [batch.batchId]
+        )
+      )[0].total
+    );
+
+    const memberPlaceholders = memberCodes.map(() => '?').join(', ');
+    const existingMembers = await query(
+      `SELECT id, phone, email
+         FROM members
+        WHERE id IN (${memberPlaceholders})
+           OR phone IN (${memberPlaceholders})
+           OR email IN (${memberPlaceholders})`,
+      [...memberCodes, ...memberCodes, ...memberCodes]
+    );
+    const knownMemberValues = new Set();
+    existingMembers.forEach((row) => {
+      knownMemberValues.add(String(row.id));
+      knownMemberValues.add(String(row.phone));
+      knownMemberValues.add(String(row.email));
+    });
+    const expectedNewMembers = memberCodes.filter((code) => !knownMemberValues.has(code));
+    createdMemberIds.push(...expectedNewMembers);
+
     const billPlaceholders = expectedBills.map(() => '?').join(', ');
     await query(
       `DELETE FROM transaction WHERE syncType = ? AND bill IN (${billPlaceholders})`,
@@ -204,6 +244,49 @@ const start = async () => {
         commit.transactions.syncType === 'dbf_igourmate',
       'commit sends the staged rows to transaction with syncType dbf_igourmate'
     );
+
+    assert(
+      commit.members &&
+        commit.members.candidates === memberCodes.length &&
+        commit.members.inserted === expectedNewMembers.length,
+      'commit creates a members row for every new member code in the batch'
+    );
+    assert(
+      commit.members.existing === memberCodes.length - expectedNewMembers.length,
+      'member codes that already exist in members are not inserted again'
+    );
+    assert(
+      commit.members.skipped === (blankMemberRows > 0 ? 1 : 0),
+      'staged rows without a member code are reported as skipped members'
+    );
+
+    if (expectedNewMembers.length > 0) {
+      const newMemberPlaceholders = expectedNewMembers.map(() => '?').join(', ');
+      const createdMembers = await query(
+        `SELECT id, phone, email, name, verified, activated, status, presence
+           FROM members
+          WHERE id IN (${newMemberPlaceholders})`,
+        expectedNewMembers
+      );
+
+      assert(
+        createdMembers.length === expectedNewMembers.length,
+        'imported member codes are stored in members.id'
+      );
+      assert(
+        createdMembers.every(
+          (row) =>
+            row.phone === row.id &&
+            row.email === row.id &&
+            row.name === row.id &&
+            Number(row.verified) === 0 &&
+            Number(row.activated) === 0 &&
+            Number(row.status) === 1 &&
+            Number(row.presence) === 1
+        ),
+        'imported members use id/phone/email/name = member code with verified/activated = 0'
+      );
+    }
 
     const transactionRows = await query(
       `SELECT checkUid, memberId, bill, totalAmount, billDate, syncType
@@ -249,6 +332,20 @@ const start = async () => {
       'double commit is rejected with 409'
     );
 
+    const recommit = await create(true);
+    createdBatches.push(recommit.batchId);
+
+    const recommitResult = await service.commitBatch(recommit.batchId, { actor: ACTOR });
+    assert(
+      recommitResult.members.inserted === 0 &&
+        recommitResult.members.existing === memberCodes.length,
+      're-committing the same member codes inserts no member and leaves existing rows untouched'
+    );
+    assert(
+      recommitResult.transactions.updated === 10 && recommitResult.transactions.inserted === 0,
+      're-committing the same DBF updates the existing transactions instead of duplicating them'
+    );
+
     let deleteCommittedError = null;
 
     try {
@@ -290,6 +387,11 @@ const start = async () => {
     for (const batchId of createdBatches) {
       // eslint-disable-next-line no-await-in-loop
       await purgeBatch(batchId);
+    }
+
+    for (const memberId of createdMemberIds) {
+      // eslint-disable-next-line no-await-in-loop
+      await query('DELETE FROM members WHERE id = ?', [memberId]);
     }
 
     console.log('info - smoke test batches, staged rows and transactions were removed');

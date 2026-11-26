@@ -63,6 +63,7 @@ src/
 		                         # admin.uploads, admin.igourmete-imports, sample
 	helpers/
 		response.js              # success(res, data, message, status) & fail(res, message, status, errors)
+		memberId.js              # Generator ID member 20 digit (0000 + tahun + 12 digit) untuk members.id VARCHAR
 	modules/
 		membership/
 			point.service.js     # Hitung & simpan point masuk (+ auto-create member by phone)
@@ -113,7 +114,7 @@ src/
 	sockets/index.js           # Socket.IO handler (member:join, ping/pong)
 	reports/templates/         # EJS: members-report, transactions-daily-report, members-logs, users-logs
 public/upload/               # Upload gambar (disajikan sebagai /public/upload/<file>)
-scripts/                     # Smoke test import igourmete (service + HTTP)
+scripts/                     # Smoke test manual: import igourmete (service + HTTP) & ID member
 AI-agent/                    # Dokumen onboarding & task board (lihat bagian 10)
 ARCHIVED/                    # Stack import CSV lama (member-sales) — tidak dipakai
 swagger.json                 # Kontrak API (generate: npm run swagger)
@@ -209,16 +210,16 @@ Catatan admin app:
 
 ## 5. Tabel Database
 
-Sumber kebenaran schema + seed: `AI-agent/table.sql`. Dump master lengkap (besar): `AI-agent/membership-master-table.sql`.
+Sumber kebenaran schema + seed: `AI-agent/table.sql`. Dump master lengkap (besar): `AI-agent/membership-master-table.sql`. Keduanya sudah dicek cocok dengan database (20 tabel, tipe & nullability) pada **2026-11-26**.
 
 | Tabel | Fungsi |
 |---|---|
-| `members` | Data member/customer (tierId, phone, email, password_hash, status, verified, activated, presence) |
+| `members` | Data member/customer (tierId, phone, email, password_hash, status, verified, activated, presence). `id` bertipe `VARCHAR(50)` berisi kode member 20 digit (bukan AUTO_INCREMENT) |
 | `members_code` | QR/redeem code per member (redeemCode, expDateTime, presence=1 artinya belum dipakai) |
-| `members_logs` | Log login member (`userId` → `members.id`, note, success) |
+| `members_logs` | Log login member (`userId` VARCHAR(50) → `members.id`, note, success) |
 | `members_voucher` | Voucher milik member (voucherId, barcode, amount, expiredDate, used, usedDate, usedMarchantId) |
 | `tier` | Rule point & tier (percentOfCashBack, accumulationAmount, minAmount, maxPercentOfBill, requirementTransactionOfTier) |
-| `points` | Buku besar point (pointIn, pointOut, transactionId, memberId, merchantId, tierId, archived, presence) |
+| `points` | Buku besar point (pointIn, pointOut, transactionId, `memberId` VARCHAR(50), merchantId, tierId, archived, presence) |
 | `transaction` | Transaksi POS (bill, totalAmount, totalRedeem, redeemCode, approvalCode, billDate, syncType, memberId VARCHAR, archived) |
 | `users` | Akun admin/staff (name, email, password_hash) |
 | `users_logs` | Log login admin |
@@ -242,7 +243,8 @@ Sumber kebenaran schema + seed: `AI-agent/table.sql`. Dump master lengkap (besar
 - Saldo point = `SUM(pointIn) - SUM(pointOut)`
 
 **Jebakan tipe data:**
-- `transaction.memberId` bertipe `VARCHAR`, sedangkan `members.id` bertipe `INT`. Selalu konversi (`String(memberId)` / cast) saat membandingkan atau join.
+- `members.id` bertipe `VARCHAR(50)` (bukan auto-increment) dan berisi kode 20 digit (`0000` + tahun + 12 digit urut). Semua kolom yang menyimpan id member mengikuti `VARCHAR(50)`: `transaction.memberId`, `points.memberId`, `members_code.memberId`, `members_voucher.memberId`, `members_logs.userId`. Bandingkan sebagai string (jangan `parseInt`) supaya leading zero tidak hilang dan index tetap terpakai.
+- INSERT ke `members` **wajib** lewat `helpers/memberId.js` (`insertMember`) karena `id` tidak lagi AUTO_INCREMENT. Registrasi tanpa nomor HP memakai ID member sebagai `phone` (kolom `phone` UNIQUE + NOT NULL).
 - `voucher_merchant.marchantId` (salah eja) sudah dipakai di kode dan UI; jangan diganti tanpa migrasi.
 - `members_voucher.usedMarchantId` juga memakai ejaan `Marchant`.
 
@@ -255,7 +257,7 @@ Sumber kebenaran schema + seed: `AI-agent/table.sql`. Dump master lengkap (besar
 | Method | URL | Auth | Keterangan |
 |---|---|---|---|
 | GET | `/api/membership/ping` | — | Health check jalur membership |
-| POST | `/api/membership/auth/register` | — | Registrasi member baru (`name`, `email`, `password`) |
+| POST | `/api/membership/auth/register` | — | Registrasi member baru (`name`, `email`, `password`) — `id` dibuat otomatis (`0000`+tahun+12 digit) dan `phone` diisi ID tersebut |
 | POST | `/api/membership/auth/login` | — | Login member, return JWT |
 | POST | `/api/membership/points/transactions` | header `token` | Point masuk dari POS (legacy: `token` = `users_token.token`, `memberId` wajib di body) |
 | GET | `/api/membership/points/balance` | JWT Bearer | Balance member (`{ memberId, balancePoint }`) |
@@ -345,7 +347,7 @@ Auth admin = JWT Bearer dari `POST /api/admin/auth/login` (tabel `users`).
 | POST | `/api/admin/imports/igourmete` | JWT | Upload file `.dbf` (multipart field `file`, max 20 MB) |
 | GET | `/api/admin/imports/igourmete/:batchId` | JWT | Detail batch + schema kolom |
 | GET | `/api/admin/imports/igourmete/:batchId/rows` | JWT | Baris staging (page/pageSize/severity/search) |
-| POST | `/api/admin/imports/igourmete/:batchId/commit` | JWT | Commit baris ke tabel `transaction` |
+| POST | `/api/admin/imports/igourmete/:batchId/commit` | JWT | Commit baris ke tabel `transaction` + buat baris `members` yang belum ada |
 | DELETE | `/api/admin/imports/igourmete/:batchId` | JWT | Hapus batch `STAGED` |
 | GET | `/api/admin/reports` | — | List report registry (**auth masih di-comment**) |
 | GET | `/api/admin/reports/:reportKey` | — | Render report `html`/`json` (**auth masih di-comment**) |
@@ -372,7 +374,7 @@ Contoh: `percentOfCashBack = 5`, `accumulationAmount = 100` → belanja 500.000 
 Alur POS V1 (`POST /api/v1/pos/points/in`):
 1. Middleware `authPosV1` (jika `POS_V1_JWT_REQUIRED=true`) → `req.posUser = { id, merchantId }`.
 2. `resolveMerchantByAccess()` — pakai `merchantId` dari token; kalau 0, fallback ke `users_token` terbaru milik `posUserId`.
-3. `resolveMemberByIdentifier()` dengan `autoCreateByPhone: true` — kalau `phone` tidak ditemukan, member dibuat otomatis (`Guest <4 digit akhir phone>`, email `auto-...@guest.membership.local`, tier aktif pertama, password acak bcrypt). Member lama yang `status`/`presence` bukan 1 akan diaktifkan kembali.
+3. `resolveMemberByIdentifier()` dengan `autoCreateByPhone: true` — kalau `phone` tidak ditemukan, member dibuat otomatis (`Guest <4 digit akhir phone>`, email `auto-...@guest.membership.local`, tier aktif pertama, password acak bcrypt). Member lama yang `status`/`presence` bukan 1 akan diaktifkan kembali. ID member dibuat lewat `helpers/memberId.js` (20 digit) dan baris dibaca ulang memakai ID itu — **jangan** pakai `insertResult.insertId` (selalu `0` karena `members.id` bukan AUTO_INCREMENT).
 4. Ambil tier aktif member (`status = 1`, `presence = 1`); tidak ada → `404/422`.
 5. Hitung point, lalu insert `transaction` + `points` (`pointIn`) dalam satu DB transaction (`syncType = 'api'`).
 6. Emit `point:in` ke room `member:{memberId}`.
@@ -456,6 +458,7 @@ Catatan:
 10. **Jangan mengubah schema dari kode.** `initDatabase()` tidak dipanggil; perubahan tabel dilakukan di `AI-agent/table.sql` + migrasi manual.
 11. **Route baru** didaftarkan di `src/server.js` (mount point) → file router di `src/routes/...` → controller → service. Ikuti pemisahan layer yang sudah ada. Catatan realita kode: hanya `point`, `redeem`, `auth`, `member`, dan `import` yang punya service sendiri; controller `tiers`, `promos`, `vouchers`, dan sebagian besar `admin.*` masih memuat query SQL langsung. Untuk perubahan besar, pertimbangkan memindahkan SQL ke service baru tanpa memecah pola endpoint lama.
 12. **Soft delete** memakai `presence = 0` (bukan `DELETE`), konsisten dengan implementasi voucher/promo/user.
+13. **INSERT ke `members` hanya lewat `helpers/memberId.js` → `insertMember(executor, dataOrFn)`.** Helper ini membuat ID `0000` + tahun + 12 digit urut (`MAX(SUBSTRING(id, prefix.length+1)) + 1`) dengan retry saat `ER_DUP_ENTRY` pada PRIMARY, mengembalikan `{ id }`, dan `dataOrFn` boleh berupa fungsi `(id) => row` bila kolom lain perlu diturunkan dari ID (contoh: `phone = id` pada register). Jangan menulis `INSERT INTO members` langsung dan jangan mengandalkan `insertId`.
 
 ### 9.2 Frontend (Angular 18, standalone)
 
@@ -467,6 +470,7 @@ Catatan:
 6. **Ikuti desain referensi**: `user/stitchUser/*/code.html` untuk member app.
 7. **Angular 18 API**: `@if`/`@for` boleh dipakai; `*ngIf`/`*ngFor` juga masih ada di kode lama — ikuti file yang sedang diedit agar konsisten.
 8. **Socket** hanya lewat `socket.service.ts`; jangan buka koneksi baru di komponen.
+9. **ID member = `string`.** `members.id` di backend `VARCHAR(50)` berisi kode 20 digit. Interface frontend (`MemberProfile.id`) memakai `string`; jangan `Number()`/`parseInt` karena leading zero hilang dan request ke `/members-voucher/:id` dll bisa salah.
 
 ---
 
@@ -528,6 +532,7 @@ Implementasi: `src/modules/import/igourmete-dbf.parser.js` + `igourmete.service.
 - Upload `.dbf` (multipart field `file`, max 20 MB) → parsing header DBF → simpan baris ke staging `dbf_igourmete_daily` dengan status batch.
 - Endpoint: list batch, detail batch (+schema kolom), rows (page/pageSize/severity/search), commit, delete batch `STAGED`.
 - Commit menulis ke tabel `transaction` dengan `syncType = 'dbf_igourmate'`, **tidak** membuat baris `points`.
+- Commit juga membuat baris `members` untuk setiap kode `member` yang belum ada (`id`/`phone`/`email`/`name` = kode, `verified = 0`, `activated = 0`); kode yang sudah ada dilewati tanpa update. Karena `id` dikirim eksplisit dari DBF, jalur ini **tidak** memakai `helpers/memberId.js`.
 - Detail kolom & aturan validasi: lihat `server/AI-agent/igourmate-dbf-import.md` (dokumen acuan, jangan diduplikasi di sini).
 
 ---
@@ -547,9 +552,15 @@ Belum / perlu perhatian:
 2. **`rules.md`** sebelumnya kosong; sekarang diisi ringkasan aturan SQL. Kalau menambah aturan baru, update di sana.
 3. **`initDatabase()` tidak dipanggil** → schema harus disiapkan manual dari `table.sql`.
 4. **`users-logs` report** join ke `members` (lihat bagian 11).
-5. **Import DBF** hanya menulis `transaction`, tidak membuat `points` — kalau butuh akumulasi point dari data historis, itu pekerjaan terpisah.
-6. **Tidak ada test otomatis** (unit/e2e). `server/scripts/test-igourmete-import*.js` hanya smoke test manual.
+5. **Import DBF** hanya menulis `transaction`, tidak membuat `points` — kalau butuh akumulasi point dari data historis, itu pekerjaan terpisah. Skema sudah siap (`points.memberId` kini `VARCHAR(50)`), jadi tinggal keputusan bisnis.
+6. **Tidak ada test otomatis** (unit/e2e). Smoke test manual: `server/scripts/test-igourmete-import*.js` dan `server/scripts/test-member-id.js`.
 7. **`src/routes/index.js` tidak dipakai** `server.js` (mount langsung per-router). Jangan bingung kalau isinya cuma health.
+8. **Migrasi manual terakhir (2026-11-26):** `points.memberId` dan `members_logs.userId` diubah ke `VARCHAR(50)`. Environment lain (staging/prod) wajib menjalankan ALTER ini bersamaan dengan deploy kode terbaru, karena `members.id` sudah `VARCHAR`:
+
+```sql
+ALTER TABLE `points`       MODIFY COLUMN `memberId` VARCHAR(50) NOT NULL DEFAULT '';
+ALTER TABLE `members_logs` MODIFY COLUMN `userId`   VARCHAR(50) NOT NULL DEFAULT '';
+```
 
 ---
 
@@ -587,6 +598,15 @@ npm start
 
 ## 15. Changelog Dokumen
 
+- **2026-11-26 (lanjutan)** — Sinkronisasi penuh `members.id` → `VARCHAR(50)`:
+  - `points.memberId` & `members_logs.userId` di-ALTER ke `VARCHAR(50)`; sekarang semua kolom referensi id member seragam (`transaction`, `points`, `members_code`, `members_voucher`, `members_logs`). Diverifikasi lewat `information_schema`.
+  - `members.id` bukan AUTO_INCREMENT lagi → helper baru `src/helpers/memberId.js` (`0000` + tahun + 12 digit, `MAX+1`, retry saat `ER_DUP_ENTRY`) dipakai di `auth.service.register`, `point.service` (auto-create by phone), dan `redeem.service` (auto-create by phone). `insertId` tidak dipakai lagi untuk member.
+  - `admin.members.controller.js` detail member memakai `req.params.id` sebagai string (bukan `parseInt`) + guard `404`.
+  - `config/db.js` (`initDatabase()`) DDL `members` disamakan dengan schema asli: `id VARCHAR(50)`, plus `tierId`, `phone`, `birthdate`, `verified`, `activated`, `UNIQUE KEY phone`.
+  - Smoke test baru `scripts/test-member-id.js` (15 assertions: format ID, register, login, duplikat email, `points.memberId` 20 digit, auto-create dari POS).
+  - `table.sql` & `membership-master-table.sql` dicek ulang dan cocok dengan DB (20 tabel).
+  - Member app: `MemberProfile.id` diubah `number` → `string`; `login-welcome.page.ts` memakai tipe `MemberProfile` (sebelumnya inline `{ id: number ... }` yang gagal compile). `AGENT-ADMIN.md` & `AGENT-USER.md` dikoreksi soal tipe `members.id`.
+  - Verifikasi build: `user` (`tsc -p tsconfig.app.json --noEmit` + `ng build`) dan `admin` (`npm run build`) sukses.
 - **2026-11-26** — Audit menyeluruh terhadap kode:
   - Menambah workspace `admin` (sebelumnya tidak terdokumentasi) beserta struktur folder & route-nya.
   - Melengkapi struktur folder server (`helpers/`, `modules/import/`, `controllers/admin/`, `reports/templates/`).

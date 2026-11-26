@@ -184,5 +184,6 @@ Selalu `require('../helpers/response')` — jangan menulis `res.json({...})` man
 - ❌ `console.log` berisi token/password.
 - ❌ Mengubah `swagger.json` manual (generate dengan `npm run swagger`).
 - ❌ Menjalankan `initDatabase()` sebagai cara membuat tabel (fungsi ada tapi tidak dipanggil di `server.js`).
+- ❌ INSERT ke `members` tanpa `id` — kolom `id` VARCHAR(50) tanpa AUTO_INCREMENT; pakai `src/helpers/memberId.js` (`insertMember`) agar ID berbentuk kode POS 20 digit.
 
 

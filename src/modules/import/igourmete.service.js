@@ -1,4 +1,6 @@
 const { getPool, query } = require('../../config/db');
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const {
   parseIgourmeteDbf,
   DATASET_LABELS,
@@ -9,6 +11,10 @@ const CHUNK_SIZE = 500;
 const DEFAULT_BATCH_PAGE_SIZE = 10;
 const DEFAULT_ROW_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 200;
+
+// `members.id` is VARCHAR(50) (POS member code), so a member code coming from
+// the DBF can be inserted as-is without numeric casting.
+const MEMBER_CODE_MAX_LENGTH = 50;
 
 const STATUSES = new Set(['STAGED', 'COMMITTED', 'REJECTED']);
 const SEVERITIES = new Set(['OK', 'WARNING', 'ERROR']);
@@ -400,6 +406,128 @@ const getBatchRows = async (batchId, options = {}) => {
   };
 };
 
+const bcryptSaltRounds = (() => {
+  const parsed = Number(process.env.BCRYPT_SALT_ROUNDS);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 10;
+})();
+
+const normaliseMemberCode = (value) => {
+  const code = String(value === null || value === undefined ? '' : value).trim();
+
+  if (!code || code === '0') {
+    return null;
+  }
+
+  return code.length > MEMBER_CODE_MAX_LENGTH ? code.slice(0, MEMBER_CODE_MAX_LENGTH) : code;
+};
+
+/**
+ * Pastikan setiap kode member di baris staging punya baris di `members`.
+ *
+ * Aturan:
+ *   - `members.id` sudah ada           -> baris dibiarkan apa adanya (tidak di-update)
+ *   - belum ada                        -> insert `id`/`phone`/`email`/`name` = member,
+ *                                         `verified = 0`, `activated = 0`
+ *
+ * `password_hash` wajib diisi (NOT NULL tanpa default), jadi dipakai hash bcrypt dari
+ * password acak yang langsung dibuang: member hasil import tidak bisa login sampai
+ * password di-set ulang.
+ *
+ * Pencocokan memakai `id`, `phone`, dan `email` karena `members.phone`/`members.email`
+ * unik — kode yang sudah terpakai tidak boleh menghasilkan error duplikat.
+ */
+const ensureMembersFromRows = async (connection, rows) => {
+  const codes = [];
+  const seenCodes = new Set();
+  const invalidCodes = new Set();
+
+  for (const row of rows) {
+    const code = normaliseMemberCode(row.member);
+
+    if (!code) {
+      invalidCodes.add(String(row.member === null || row.member === undefined ? '' : row.member));
+      continue;
+    }
+
+    if (seenCodes.has(code)) {
+      continue;
+    }
+
+    seenCodes.add(code);
+    codes.push(code);
+  }
+
+  const result = {
+    candidates: codes.length,
+    inserted: 0,
+    existing: 0,
+    conflicted: 0,
+    skipped: invalidCodes.size
+  };
+
+  if (codes.length === 0) {
+    return result;
+  }
+
+  const knownValues = new Set();
+
+  for (let offset = 0; offset < codes.length; offset += CHUNK_SIZE) {
+    const chunk = codes.slice(offset, offset + CHUNK_SIZE);
+    const placeholders = chunk.map(() => '?').join(', ');
+    const [found] = await connection.query(
+      `SELECT id, phone, email
+         FROM members
+        WHERE id IN (${placeholders})
+           OR phone IN (${placeholders})
+           OR email IN (${placeholders})`,
+      [...chunk, ...chunk, ...chunk]
+    );
+
+    for (const member of found) {
+      knownValues.add(String(member.id));
+      knownValues.add(String(member.phone));
+      knownValues.add(String(member.email));
+    }
+  }
+
+  const missing = codes.filter((code) => !knownValues.has(code));
+
+  result.existing = codes.length - missing.length;
+
+  if (missing.length === 0) {
+    return result;
+  }
+
+  const passwordHash = await bcrypt.hash(
+    crypto.randomBytes(16).toString('hex'),
+    bcryptSaltRounds
+  );
+
+  for (let offset = 0; offset < missing.length; offset += CHUNK_SIZE) {
+    const chunk = missing.slice(offset, offset + CHUNK_SIZE);
+    const placeholders = chunk.map(() => '(?, ?, ?, ?, ?, 0, 0)').join(', ');
+    const params = [];
+
+    for (const code of chunk) {
+      params.push(code, code, code, code, passwordHash);
+    }
+
+    // INSERT IGNORE: baris yang bentrok dengan unique `phone`/`email` (data lama
+    // di luar import ini) dilewati, bukan menggagalkan seluruh commit.
+    const [insertResult] = await connection.query(
+      `INSERT IGNORE INTO members (id, phone, email, name, password_hash, verified, activated)
+       VALUES ${placeholders}`,
+      params
+    );
+
+    result.inserted += Number(insertResult.affectedRows || 0);
+  }
+
+  result.conflicted = missing.length - result.inserted;
+
+  return result;
+};
+
 const TRANSACTION_SYNC_TYPE = 'dbf_igourmate';
 
 const buildTransactionBill = (row) => {
@@ -531,6 +659,7 @@ const commitBatch = async (batchId, options = {}) => {
       [batchId]
     );
 
+    const members = await ensureMembersFromRows(connection, eligibleRows);
     const transactions = await sendRowsToTransaction(connection, batchId, eligibleRows);
 
     await connection.query(
@@ -556,9 +685,17 @@ const commitBatch = async (batchId, options = {}) => {
         skipped: transactions.skipped,
         syncType: TRANSACTION_SYNC_TYPE
       },
+      members: {
+        candidates: members.candidates,
+        inserted: members.inserted,
+        existing: members.existing,
+        conflicted: members.conflicted,
+        skipped: members.skipped
+      },
       message:
         `Batch #${batchId} committed — ${transactions.inserted} transaction row(s) inserted` +
         (transactions.updated > 0 ? `, ${transactions.updated} updated` : '') +
+        (members.inserted > 0 ? `, ${members.inserted} member(s) created` : '') +
         (skippedTotal > 0 ? `, ${skippedTotal} row(s) skipped` : '') +
         `.`
     };

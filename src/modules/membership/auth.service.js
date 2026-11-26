@@ -2,7 +2,9 @@ require('../../config/loadEnv');
 
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { query } = require('../../config/db');
+const { query, getPool } = require('../../config/db');
+const { insertMember } = require('../../helpers/memberId');
+
 
 const addMemberLog = async (userId, note, success = 0) => {
   try {
@@ -50,16 +52,21 @@ const register = async ({ name, email, password }) => {
   }
 
   const passwordHash = await bcrypt.hash(password, bcryptSaltRounds);
+  const pool = await getPool();
 
-  await query('INSERT INTO members (name, email, password_hash) VALUES (?, ?, ?)', [
+  // `members.id` bukan AUTO_INCREMENT, jadi ID dibuat oleh helper. `phone` bersifat
+  // UNIQUE + NOT NULL, sehingga registrasi tanpa nomor HP memakai ID member sebagai
+  // phone (konvensi yang sama dengan member hasil import DBF Igourmate).
+  const memberId = await insertMember(pool, (generatedId) => ({
+    phone: generatedId,
     name,
     email,
-    passwordHash
-  ]);
+    password_hash: passwordHash
+  }));
 
   const rows = await query(
-    'SELECT id, name, email, inputDate AS created_at FROM members WHERE email = ? LIMIT 1',
-    [email]
+    'SELECT id, name, email, inputDate AS created_at FROM members WHERE id = ? LIMIT 1',
+    [memberId]
   );
 
   try {

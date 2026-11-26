@@ -1,4 +1,5 @@
 const { getPool } = require('../../config/db');
+const { insertMember } = require('../../helpers/memberId');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
@@ -69,15 +70,23 @@ const createMemberFromPhone = async (connection, phone) => {
   const passwordHash = await bcrypt.hash(generatedPassword, bcryptSaltRounds);
   const generatedName = `Guest ${normalizedPhone.slice(-4) || normalizedPhone}`;
 
-  const [insertResult] = await connection.execute(
-    `INSERT INTO members (tierId, phone, name, email, password_hash, status, verified, activated, presence)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [tierId, normalizedPhone, generatedName, generatedEmail, passwordHash, 1, 0, 0, 1]
-  );
+  // `members.id` bukan AUTO_INCREMENT (VARCHAR 20 digit), jadi ID dibuat helper dan
+  // dipakai untuk membaca ulang baris yang baru dibuat.
+  const memberId = await insertMember(connection, {
+    tierId,
+    phone: normalizedPhone,
+    name: generatedName,
+    email: generatedEmail,
+    password_hash: passwordHash,
+    status: 1,
+    verified: 0,
+    activated: 0,
+    presence: 1
+  });
 
   const [createdRows] = await connection.execute(
     'SELECT id, tierId, phone, name, email FROM members WHERE id = ? LIMIT 1',
-    [insertResult.insertId]
+    [memberId]
   );
 
   if (createdRows.length === 0) {

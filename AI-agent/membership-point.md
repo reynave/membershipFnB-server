@@ -112,5 +112,5 @@ API sebaiknya mengembalikan ringkasan hasil proses, minimal:
 
 ### Catatan Teknis
 
-- Kolom `transaction.memberId` bertipe `varchar`, sedangkan `members.id` bertipe `int`. Secara logic masih bisa dipakai, tetapi skema ini sebaiknya diseragamkan jika nanti dilakukan revisi schema.
+- Kolom `members.id` bertipe `varchar(50)` berisi kode member 20 digit (`0000` + tahun + 12 digit); `transaction.memberId` dan `points.memberId` juga `varchar(50)`. Bandingkan sebagai string, jangan cast ke angka (leading zero hilang).
 - Nilai `percentOfCashBack` di tabel `tier` dibaca sebagai persen utuh, misalnya `10` berarti `10%`, sehingga rumusnya harus dibagi `100` saat perhitungan.

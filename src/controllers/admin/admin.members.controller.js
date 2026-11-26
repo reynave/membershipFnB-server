@@ -51,7 +51,15 @@ const list = async (req, res, next) => {
 
 const detail = async (req, res, next) => {
   try {
-    const id = parseInt(req.params.id);
+    // `members.id` adalah VARCHAR (kode 20 digit), jadi jangan di-parse menjadi angka:
+    // parseInt membuang leading zero dan gagal untuk ID non-numerik.
+    const id = String(req.params.id || '').trim();
+
+    if (!id) {
+      const err = new Error('Member not found');
+      err.statusCode = 404;
+      return next(err);
+    }
 
     const members = await query(
       `SELECT m.id, m.name, m.email, m.phone, m.birthdate, m.tierId, m.status, m.activated,

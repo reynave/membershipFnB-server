@@ -15,8 +15,9 @@ Implementasi server:
 | `src/modules/import/igourmete.service.js` | Staging batch/row persistence, list, detail, rows, commit, delete |
 | `src/controllers/admin/admin.igourmete-imports.controller.js` | Multer memory upload (20 MB, `.dbf`), response envelope |
 | `src/routes/admin/admin.igourmete-imports.routes.js` | `/api/admin/imports/igourmete` routes |
-| `scripts/test-igourmete-import.js` | Service smoke test (29 assertions) |
-| `scripts/test-igourmete-import-http.js` | HTTP/route smoke test (16 assertions) |
+| `scripts/test-igourmete-import.js` | Service smoke test (41 assertions) |
+| `scripts/test-igourmete-import-http.js` | HTTP/route smoke test (20 assertions) |
+| `scripts/test-member-id.js` | Regression test ID member 20 digit, register, auto-create by phone & points (15 assertions) |
 | `AI-agent/igourmete-dbf-staging.sql` | Applied DDL for `dbf_import_batch` + `dbf_igourmete_daily` |
 
 Referensi bisnis: `AI-agent/agent-upload-igourmate.md`.
@@ -38,7 +39,7 @@ Semua endpoint memakai middleware `auth` (Bearer JWT admin) dan envelope standar
 | GET | `/api/admin/imports/igourmete` | Daftar batch staging: `page`, `pageSize`, `status`, `search` |
 | GET | `/api/admin/imports/igourmete/:batchId` | Ringkasan batch + schema kolom DBF |
 | GET | `/api/admin/imports/igourmete/:batchId/rows` | Baris staging: `page`, `pageSize`, `severity`, `search` |
-| POST | `/api/admin/imports/igourmete/:batchId/commit` | Tandai batch `COMMITTED` (baris tetap di `dbf_igourmete_daily`) |
+| POST | `/api/admin/imports/igourmete/:batchId/commit` | Kirim baris staging ke `transaction` + buat `members` yang belum ada (baris tetap di `dbf_igourmete_daily`) |
 | DELETE | `/api/admin/imports/igourmete/:batchId` | Hapus batch yang masih `STAGED` |
 
 Catatan penting: **tidak ada parser DBF di frontend**. Halaman Angular hanya berisi
@@ -225,7 +226,35 @@ Body tidak dipakai saat ini (boleh kosong). Batch harus `STAGED` dan `errorCount
 selain itu `409`. Dalam satu DB transaction, commit:
 
 1. Mengunci batch (`SELECT ... FOR UPDATE`) dan memvalidasi status.
-2. Mengirim setiap baris layak (`severity <> 'ERROR'`, `isDeleted = 0`) ke tabel
+2. Membuat baris `members` untuk setiap kode `member` yang belum ada (**dijalankan
+   sebelum** pengiriman ke `transaction`):
+
+   | Sumber `dbf_igourmete_daily` | Tujuan `members` |
+   |---|---|
+   | `member` | `id` (VARCHAR(50), kode DBF apa adanya — tanpa cast numerik) |
+   | `member` | `phone` |
+   | `member` | `email` |
+   | `member` | `name` |
+   | — | `verified = 0`, `activated = 0` |
+   | — | `password_hash` = satu hash bcrypt dari password acak yang dibuang |
+
+   Aturan:
+
+   - Kode `member` yang **sudah ada** (dicocokkan lewat `id`, `phone`, atau `email`)
+     dilewati; baris `members` lama **tidak di-update**.
+   - Kode kosong / `'0'` dilewati dan dihitung di `members.skipped`.
+   - Kode yang bentrok dengan unique `phone`/`email` milik data lama di luar import
+     dilewati (`INSERT IGNORE`) dan dihitung di `members.conflicted`.
+   - Password hasil import tidak diketahui (hash acak dibuang), jadi member baru tidak
+     bisa login sampai password di-set ulang.
+   - `members.id` sudah `VARCHAR(50)` (bukan auto-increment), sehingga kode 20 digit
+     seperti `00002024000000001498` tersimpan apa adanya dan bisa di-join dengan
+     `transaction.memberId`.
+   - Karena `id` tidak lagi auto-increment, member yang dibuat aplikasi (register /
+     auto-create dari phone) memakai `src/helpers/memberId.js` dengan bentuk ID yang
+     sama: `0000` + tahun + 12 digit urut (contoh `00002026000000000001`).
+
+3. Mengirim setiap baris layak (`severity <> 'ERROR'`, `isDeleted = 0`) ke tabel
    `transaction` (upsert berdasarkan unique key `transaction.bill`):
 
    | Sumber `dbf_igourmete_daily` | Tujuan `transaction` |
@@ -239,11 +268,12 @@ selain itu `409`. Dalam satu DB transaction, commit:
 
    Karena `bill` unik, commit ulang file yang sama lewat batch baru akan memperbarui
    baris lama (`updated`), bukan membuat duplikat.
-3. Menandai batch `COMMITTED` + `committed_by`/`committed_at`.
+4. Menandai batch `COMMITTED` + `committed_by`/`committed_at`.
 
 Baris staging **tidak dihapus**. `inserted`/`updated`/`skipped` pada response adalah
 hasil pengiriman ke `transaction`; `skipped` = baris error/terhapus + baris tanpa
-`checkDate`/`checkNo`. Penulisan `points` belum termasuk commit ini (lihat bagian 8).
+`checkDate`/`checkNo`. Rekap pembuatan member ada di objek `members`. Penulisan `points`
+belum termasuk commit ini (lihat bagian 8).
 
 Response `200`:
 
@@ -263,14 +293,21 @@ Response `200`:
       "skipped": 0,
       "syncType": "dbf_igourmate"
     },
-    "message": "Batch #12 committed — 10 transaction row(s) inserted."
+    "members": {
+      "candidates": 4,
+      "inserted": 4,
+      "existing": 0,
+      "conflicted": 0,
+      "skipped": 1
+    },
+    "message": "Batch #12 committed — 10 transaction row(s) inserted, 4 member(s) created."
   }
 }
 ```
 
-Frontend membaca `data.inserted`, `data.updated`, `data.skipped`, `data.message`.
-`DELETE /:batchId` menolak batch `COMMITTED` dengan `409`; batch `STAGED` dihapus
-bersama seluruh barisnya.
+Frontend membaca `data.inserted`, `data.updated`, `data.skipped`, `data.members` dan
+`data.message`. `DELETE /:batchId` menolak batch `COMMITTED` dengan `409`; batch `STAGED`
+dihapus bersama seluruh barisnya.
 
 ---
 
@@ -328,21 +365,25 @@ diimpor ulang sebagai batch baru.
 
 | Dataset | Deteksi server (field wajib) | Target tabel | Catatan |
 |---|---|---|---|
-| `DAILY_CHECK` | `FCHECKUID` + `FDATE` + `FCHECK` | `dbf_igourmete_daily` → `transaction` | **Sudah diimplementasi**; commit mengirim baris layak ke `transaction` (`syncType = 'dbf_igourmate'`) |
+| `DAILY_CHECK` | `FCHECKUID` + `FDATE` + `FCHECK` | `dbf_igourmete_daily` → `transaction` + `members` | **Sudah diimplementasi**; commit mengirim baris layak ke `transaction` (`syncType = 'dbf_igourmate'`) dan membuat `members` yang belum ada |
 | `MEMBER_PROFILE` | `MEMBERID` + (`FIRSTNAME` \| `DISPLAYNAME`) | `members` | Field baru (`cardNo`, alamat, dll.) belum ada di skema |
 | `MEMBER_CLASS` | `CLASSID` \| `MEMBERCLASSID` | `tier` | Perlu konfirmasi apakah class Igourmate = tier membership |
 | `SALES` | `CHECKNO` \| `BILLNO` \| `PLU` | `transaction` + `points` | Harus diputuskan apakah memakai jalur `member-sales` yang sudah ada |
 | `UNKNOWN` | selain di atas | - | Baris tetap di-stage, tetapi commit ke membership belum diizinkan |
 
-Belum diputuskan (jangan diasumsikan di implementasi):
+Sudah diputuskan: `FMEMBER` di-stage di `dbf_igourmete_daily.member`, disimpan apa adanya
+di `members.id` (VARCHAR(50)) dan dikirim apa adanya ke `transaction.memberId`; member yang
+belum ada dibuat otomatis saat commit (bagian 6). Skema juga sudah diseragamkan: `members.id`,
+`transaction.memberId`, `points.memberId`, `members_code.memberId`, `members_voucher.memberId`,
+dan `members_logs.userId` semuanya `VARCHAR(50)`, sehingga kode 20 digit bisa dicatat di
+`points` tanpa overflow. Sisa yang belum diputuskan:
 
-1. `FMEMBER` sudah di-stage di `dbf_igourmete_daily.member` dan dikirim apa adanya ke
-   `transaction.memberId` (VARCHAR(50)). Kolom tujuan di tabel `members` belum diputuskan.
-2. Apakah `SALES` DBF memakai logika `transaction.bill` deterministik seperti
+1. Apakah `SALES` DBF memakai logika `transaction.bill` deterministik seperti
    `member-sales` (supaya tidak dobel) atau memakai `bill` dari file.
-3. `DAILY_CHECK` → `transaction` sudah diputuskan: `bill = checkDate.checkNo`,
+2. `DAILY_CHECK` → `transaction` sudah diputuskan: `bill = checkDate.checkNo`,
    `billDate = timeOpen`, `syncType = 'dbf_igourmate'`, `merchantId = 0`. Penulisan `points`
-   belum termasuk.
+   belum termasuk — ini keputusan bisnis (apakah check historis boleh menghasilkan point),
+   bukan lagi batasan tipe kolom.
 
 ---
 
@@ -354,7 +395,7 @@ Belum diputuskan (jangan diasumsikan di implementasi):
 | `POST`/`GET`/`GET`/`GET`/`POST`/`DELETE` | ✅ semua endpoint aktif & teruji |
 | Database staging | ✅ `dbf_import_batch` + `dbf_igourmete_daily` (bagian 7) |
 | `/igourmete` + `/igourmete/:batchId` | ✅ terhubung ke API; `ng build` sukses |
-| Mapping ke tabel membership (T-035) | 🟨 `DAILY_CHECK` → `transaction` selesai; `SALES`/`members` masih terbuka |
-| Commit ke `transaction`/`points` | 🟨 `transaction` ✅ (`syncType = 'dbf_igourmate'`); `points` ⬜ |
+| Mapping ke tabel membership (T-035) | 🟨 `DAILY_CHECK` → `transaction` + `members` selesai; `SALES` masih terbuka |
+| Commit ke `transaction`/`points` | 🟨 `transaction` ✅ (`syncType = 'dbf_igourmate'`), `members` ✅ (auto-create); `points` ⬜ (skema sudah siap: `points.memberId` VARCHAR(50)) |
 
 

@@ -24,6 +24,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'local-dev-secret';
 let passed = 0;
 const createdBatches = [];
 const createdBills = [];
+const createdMemberIds = [];
 
 const pad2 = (value) => String(value).padStart(2, '0');
 
@@ -179,6 +180,31 @@ const start = async () => {
       'GET rows exposes and searches member (FMEMBER)'
     );
 
+    const stagedMemberCodes = (
+      await query(
+        `SELECT DISTINCT member
+           FROM dbf_igourmete_daily
+          WHERE batchId = ? AND isDeleted = 0 AND severity <> 'ERROR' AND member <> ''`,
+        [batchId]
+      )
+    ).map((row) => String(row.member));
+
+    const membersBefore = await query(
+      `SELECT id, phone, email FROM members
+        WHERE id IN (${stagedMemberCodes.map(() => '?').join(', ')})
+           OR phone IN (${stagedMemberCodes.map(() => '?').join(', ')})
+           OR email IN (${stagedMemberCodes.map(() => '?').join(', ')})`,
+      [...stagedMemberCodes, ...stagedMemberCodes, ...stagedMemberCodes]
+    );
+    const knownMemberValues = new Set();
+    membersBefore.forEach((row) => {
+      knownMemberValues.add(String(row.id));
+      knownMemberValues.add(String(row.phone));
+      knownMemberValues.add(String(row.email));
+    });
+    const expectedNewMembers = stagedMemberCodes.filter((code) => !knownMemberValues.has(code));
+    createdMemberIds.push(...expectedNewMembers);
+
     const commit = await fetch(`${baseUrl}/api/admin/imports/igourmete/${batchId}/commit`, {
       method: 'POST',
       headers: { ...headers, 'Content-Type': 'application/json' },
@@ -188,6 +214,10 @@ const start = async () => {
     assert(
       commit.status === 200 && commitBody.data.inserted === 10,
       'POST /commit marks the batch committed'
+    );
+    assert(
+      commitBody.data.members && commitBody.data.members.inserted === expectedNewMembers.length,
+      'POST /commit creates members for member codes that do not exist yet'
     );
     assert(
       commitBody.data.transactions &&
@@ -274,6 +304,11 @@ const start = async () => {
     for (const batchId of createdBatches) {
       // eslint-disable-next-line no-await-in-loop
       await purgeBatch(batchId);
+    }
+
+    for (const memberId of createdMemberIds) {
+      // eslint-disable-next-line no-await-in-loop
+      await query('DELETE FROM members WHERE id = ?', [memberId]);
     }
 
     server.close();

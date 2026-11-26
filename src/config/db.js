@@ -70,16 +70,24 @@ const initDatabase = async () => {
 
   await query(`
     CREATE TABLE IF NOT EXISTS members (
-      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      -- id mengikuti kode member POS/DBF (20 digit) sehingga VARCHAR, bukan AUTO_INCREMENT.
+      -- INSERT member baru wajib memakai helper src/helpers/memberId.js.
+      id VARCHAR(50) NOT NULL DEFAULT '',
+      tierId TINYINT UNSIGNED NOT NULL DEFAULT 0,
+      phone VARCHAR(50) NOT NULL DEFAULT '0',
       name VARCHAR(120) NOT NULL,
       email VARCHAR(190) NOT NULL,
+      birthdate DATE NOT NULL DEFAULT '1990-01-01',
       password_hash VARCHAR(255) NOT NULL,
       status TINYINT NOT NULL DEFAULT 1,
+      verified TINYINT NOT NULL DEFAULT 0,
+      activated TINYINT NOT NULL DEFAULT 0,
       presence TINYINT NOT NULL DEFAULT 1,
       inputDate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updateDate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       PRIMARY KEY (id),
-      UNIQUE KEY uq_members_email (email)
+      UNIQUE KEY uq_members_email (email),
+      UNIQUE KEY phone (phone)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
 };
