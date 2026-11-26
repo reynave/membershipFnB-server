@@ -46,6 +46,8 @@ File ini hanya untuk endpoint dan logic backend admin:
 | ✅ | S-019 | Member Detail Voucher History API | Perluas GET `/api/admin/members/:id` agar include list redeem voucher dari `members_voucher` | AI | Medium | S-003, S-017 | Field response: `voucherHistory` |
 | ✅ | S-020 | Admin Promos CRUD | API admin promo header: list, detail, create, update, soft delete (`presence=0`) | AI | High | - | Route `/api/admin/promos` aktif |
 | ✅ | S-021 | Admin Promo Merchant Scope | API admin untuk simpan/ubah relasi merchant per promo di `promo_merchant`; kosong = global | AI | High | S-020 | PUT `/api/admin/promos/:id/merchants` |
+| ✅ | S-023 | Igourmate DBF Import API | Endpoint `/api/admin/imports/igourmete`: POST upload `.dbf` (parser `dbffile`), GET list batch, GET detail + schema kolom, GET rows, POST commit (kirim baris ke `transaction`, `syncType = 'dbf_igourmate'`), DELETE batch. Staging: `dbf_import_batch` + `dbf_igourmete_daily` (termasuk kolom `member` dari `FMEMBER`) | AI | Medium | - | Smoke test service 34 + HTTP 19 assertion. DDL: `AI-agent/igourmete-dbf-staging.sql` |
+| ✅ | S-024 | Admin Points List/Detail | GET `/api/admin/points` (paginasi + filter search/type/archived/`inputDateFrom`..`inputDateTo`, plus `summary` total point in/out/net) dan GET `/api/admin/points/:id` (join `transaction`, `members`, `merchant`, `tier`) | AI | Medium | S-003 | Dipakai halaman `/point` + `/point/:id`; HTTP smoke test sukses (list, filter, detail, 404, 422) |
 | ⬜ | S-016 | Admin API Test Collection | Siapkan collection test regresi `/api/admin/*` | PAIR | Medium | S-002..S-012 | Next hardening |
 
 ---
@@ -65,3 +67,9 @@ File ini hanya untuk endpoint dan logic backend admin:
 | 2026-04-22 | S-020..S-021 | Implementasi API admin Promo selesai + smoke test CRUD/scope sukses | AI |
 | 2026-04-22 | QA Visual | Validasi report filter, error handling, datepicker, build fix Angular sukses (frontend) | AI |
 | 2026-04-27 | S-022 | Reports & Logs | Tambah endpoints report `members-logs` & `users-logs`, template EJS, tambahkan kolom `userName` pada template, verifikasi HTML output, dan tambah logging login sukses ke `members_logs`. | AI |
+| 2026-11-26 | S-023 | Igourmate DBF import API: parser `dbffile`, staging `dbf_import_batch`/`dbf_igourmete_daily`, endpoint upload/list/detail/rows/commit/delete, smoke test service + HTTP | AI |
+| 2026-11-26 | S-023 | Commit Igourmate mengirim baris `dbf_igourmete_daily` ke `transaction`: `checkUid`→`checkUid`, `member`→`memberId`, `checkDate.checkNo`→`bill`, `timeOpen`→`billDate`, `syncType='dbf_igourmate'`; upsert via unique `bill` | AI |
+| 2026-11-26 | S-024 | Admin points API: `GET /api/admin/points` (paginasi, filter search/type/archived/tanggal, `summary`) + `GET /api/admin/points/:id` (join bill/member/merchant/tier); smoke test lokal 43 baris, filter, 404 & 422 lolos | AI |
+
+| 2026-11-26 | S-007, S-008 | Refactor API transactions: tabel utama `transaction` (sebelumnya `points`), point diagregasi per `transactionId` (`SUM` pointIn/pointOut + baris point terakhir untuk tier/archived), filter `type`/`inputDateFrom`..`inputDateTo` memakai kolom `transaction`, detail & list by `transaction.id`; `memberId` kosong dikembalikan `null` | AI |
+

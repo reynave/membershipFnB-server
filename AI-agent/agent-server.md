@@ -139,6 +139,10 @@ AI-AGENT/
 | Method | URL | Auth | Keterangan |
 |---|---|---|---|
 | Berbagai route | `/api/admin/*` | JWT Admin | Manajemen member, report API/HTML berbasis EJS, dll |
+| GET | `/api/admin/points` | JWT Admin | List buku besar point + filter (search/type/archived/rentang tanggal) + `summary` |
+| GET | `/api/admin/points/:id` | JWT Admin | Detail satu baris `points` + join bill, member, merchant, tier |
+| GET | `/api/admin/transactions` | JWT Admin | Ledger transaksi dengan tabel utama `transaction` (point diagregasi per `transactionId`), filter search/type/rentang tanggal |
+| GET | `/api/admin/transactions/:id` | JWT Admin | Detail satu baris `transaction` (by `transaction.id`) + ringkasan point, member, merchant, tier |
 
 ---
 
